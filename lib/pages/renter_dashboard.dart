@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/appstate.dart';
-import 'package:meadowmiles/pages/rentee/vehicle/vehicle_tab.dart';
 import 'package:provider/provider.dart';
 
-class RenteeDashboardPage extends StatefulWidget {
-  const RenteeDashboardPage({super.key});
+class RenterDashboardPage extends StatefulWidget {
+  const RenterDashboardPage({super.key});
 
   @override
-  State<RenteeDashboardPage> createState() => _RenteeDashboardPageState();
+  State<RenterDashboardPage> createState() => _RenterDashboardPageState();
 }
 
-class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
+class _RenterDashboardPageState extends State<RenterDashboardPage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    Center(child: Text('Bookings')),
-    VehicleTab(),
-    Center(child: Text('Revenues')),
-    Center(child: Text('Reports')),
+  static final List<Widget> _pages = <Widget>[
+    // TODO: Replace with actual Home/Search page
+    Center(child: Text('Home - Search & Rent Vehicles')),
+    // TODO: Replace with actual Bookings page
+    Center(child: Text('Bookings - View, Edit, Cancel')),
+    // TODO: Replace with actual Rented Vehicles page
+    Center(child: Text('Rented Vehicles - Return & Pay')),
   ];
 
   void _onItemTapped(int index) {
@@ -32,7 +33,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Owner Dashboard'),
+        title: const Text('MeadowMiles'),
         centerTitle: true,
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
@@ -59,24 +60,16 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.book_online),
             label: 'Bookings',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_car),
-            label: 'Vehicles',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.attach_money),
-            label: 'Revenues',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Reports',
+            label: 'Rented',
           ),
         ],
-        type: BottomNavigationBarType.fixed,
       ),
     );
   }

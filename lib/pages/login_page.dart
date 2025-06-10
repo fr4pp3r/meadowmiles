@@ -53,6 +53,10 @@ class LoginPage extends StatelessWidget {
         if (context.mounted) {
           Navigator.pushReplacementNamed(context, '/rentee_dashboard');
         }
+      } else if (appState.userModel?.userType == UserModelType.renter) {
+        if (context.mounted) {
+          Navigator.pushReplacementNamed(context, '/renter_dashboard');
+        }
       }
     }
   }

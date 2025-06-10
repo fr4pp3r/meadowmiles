@@ -3,6 +3,7 @@ import 'package:meadowmiles/appstate.dart';
 import 'package:meadowmiles/pages/login_page.dart';
 import 'package:meadowmiles/pages/register_page.dart';
 import 'package:meadowmiles/pages/rentee_dashboard.dart';
+import 'package:meadowmiles/pages/renter_dashboard.dart';
 import 'package:meadowmiles/pages/start_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:meadowmiles/theme.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/rentee_dashboard': (context) => const RenteeDashboardPage(),
+        '/renter_dashboard': (context) => const RenterDashboardPage(),
       },
       home: const StartPage(),
     );

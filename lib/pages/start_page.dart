@@ -89,6 +89,11 @@ class StartPage extends StatelessWidget {
                           if (context.mounted) {
                             Navigator.pushNamed(context, '/rentee_dashboard');
                           }
+                        } else if (appState.userModel?.userType ==
+                            UserModelType.renter) {
+                          if (context.mounted) {
+                            Navigator.pushNamed(context, '/renter_dashboard');
+                          }
                         }
                       }
                     },
