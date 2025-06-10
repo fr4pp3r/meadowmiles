@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/appstate.dart';
+import 'package:meadowmiles/components/vehicle_cards.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:meadowmiles/pages/rentee/vehicle/add_vehicle.dart';
+import 'package:meadowmiles/pages/rentee/vehicle/view_vehicle.dart';
 import 'package:provider/provider.dart';
 
 class VehicleTab extends StatefulWidget {
@@ -67,24 +69,6 @@ class _VehicleTabState extends State<VehicleTab> {
     });
   }
 
-  void _viewVehicle(Vehicle vehicle) {
-    // Implement view vehicle logic or navigation
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${vehicle.make} ${vehicle.model}'),
-        content: Text('Plate: ${vehicle.plateNumber}'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -146,100 +130,20 @@ class _VehicleTabState extends State<VehicleTab> {
                         itemBuilder: (context, index) {
                           final vehicle = filteredVehicles[index];
                           return GestureDetector(
-                            onTap: () => _viewVehicle(vehicle),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 8.0,
-                                right: 8.0,
-                                bottom: 8.0,
-                              ),
-                              child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${vehicle.make} ${vehicle.model}',
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.titleLarge,
-                                            ),
-                                            Text(
-                                              'Plate: ${vehicle.plateNumber}\n'
-                                              'Color: ${vehicle.color}\n'
-                                              'Price per day: Php ${vehicle.pricePerDay.toStringAsFixed(2)}\n'
-                                              'Year: ${vehicle.year}\n',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w400,
-                                                  ),
-                                            ),
-                                            Text(
-                                              vehicle.isAvailable
-                                                  ? "Available"
-                                                  : "Not Available",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                    color: vehicle.isAvailable
-                                                        ? const Color.fromARGB(
-                                                            255,
-                                                            57,
-                                                            126,
-                                                            58,
-                                                          )
-                                                        : const Color.fromARGB(
-                                                            255,
-                                                            155,
-                                                            28,
-                                                            19,
-                                                          ),
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      SizedBox(
-                                        width: 100,
-                                        height: 100,
-                                        child: vehicle.imageUrl.isNotEmpty
-                                            ? Image.network(
-                                                vehicle.imageUrl,
-                                                fit: BoxFit.cover,
-                                                errorBuilder:
-                                                    (
-                                                      context,
-                                                      error,
-                                                      stackTrace,
-                                                    ) => Container(
-                                                      color:
-                                                          Colors.grey.shade300,
-                                                      child: const Icon(
-                                                        Icons.car_repair,
-                                                      ),
-                                                    ),
-                                              )
-                                            : Container(
-                                                color: Colors.grey.shade300,
-                                                child: const Icon(
-                                                  Icons.car_repair,
-                                                ),
-                                              ),
-                                      ),
-                                    ],
-                                  ),
+                            onTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ViewVehiclePage(vehicle: vehicle),
                                 ),
-                              ),
-                            ),
+                              );
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              await _fetchVehicles();
+                            },
+                            child: VehicleCard(vehicle: vehicle),
                           );
                         },
                       ),

@@ -6,12 +6,18 @@ import 'package:meadowmiles/pages/rentee_dashboard.dart';
 import 'package:meadowmiles/pages/start_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:meadowmiles/theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Supabase.initialize(
+    url: 'https://tqqnvdlefaltvqlnbyub.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcW52ZGxlZmFsdHZxbG5ieXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1MzYwMTMsImV4cCI6MjA2NTExMjAxM30.4ppaD5zRt9eLrhJGDrSMgr-OZRnxjCqXR3tPznxNJgM',
+  );
   runApp(
     ChangeNotifierProvider(create: (_) => AppState(), child: const MyApp()),
   );

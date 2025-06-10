@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:meadowmiles/main.dart';
 import 'package:meadowmiles/models/user_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 
 class AppState extends ChangeNotifier {
   final _auth = FirebaseAuth.instance;
@@ -178,5 +182,23 @@ class AppState extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
+  }
+
+  Future<String?> uploadVehicleImage(XFile pickedFile) async {
+    final file = File(pickedFile.path);
+    final fileName = 'vehicle_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    final storageResponse = await Supabase.instance.client.storage
+        .from('vehicle-img') // your bucket name
+        .upload(fileName, file);
+
+    if (storageResponse.isEmpty) return null;
+
+    // Get the public URL
+    final publicUrl = Supabase.instance.client.storage
+        .from('vehicle-img')
+        .getPublicUrl(fileName);
+
+    return publicUrl;
   }
 }
