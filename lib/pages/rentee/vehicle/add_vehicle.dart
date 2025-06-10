@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:meadowmiles/appstate.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class AddVehiclePage extends StatefulWidget {
   const AddVehiclePage({super.key});
@@ -22,6 +24,9 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
   final TextEditingController _pricePerDayController = TextEditingController();
   VehicleType _selectedType = VehicleType.car;
   bool _isAvailable = true;
+  bool isLoading = false;
+  XFile? pickedFile;
+  String? imageUrl;
 
   @override
   void dispose() {
@@ -32,11 +37,36 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
     _colorController.dispose();
     _imageUrlController.dispose();
     _pricePerDayController.dispose();
+    pickedFile = null; // Clear the picked file
+    imageUrl = null; // Clear the image URL
     super.dispose();
   }
 
-  void _submit(AppState appState) async {
+  Future<void> _submit(AppState appState) async {
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() => isLoading = true);
+      if (pickedFile != null) {
+        final uploadedImageUrl = await appState.uploadVehicleImage(pickedFile!);
+        if (uploadedImageUrl != null) {
+          _imageUrlController.text = uploadedImageUrl;
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to upload image')),
+            );
+          }
+          setState(() => isLoading = false);
+          return;
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload image')),
+          );
+        }
+        setState(() => isLoading = false);
+        return;
+      }
       final vehicle = Vehicle(
         id: Vehicle.generateVehicleId(),
         ownerId: appState.currentUser!.uid,
@@ -67,6 +97,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
         ).showSnackBar(SnackBar(content: Text('Failed to add vehicle: $e')));
       }
     }
+    setState(() => isLoading = false);
   }
 
   @override
@@ -166,15 +197,6 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 },
               ),
               const SizedBox(height: 8),
-              TextFormField(
-                controller: _imageUrlController,
-                style: Theme.of(context).textTheme.bodySmall,
-                decoration: InputDecoration(
-                  labelText: 'Image URL (optional)',
-                  labelStyle: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-              const SizedBox(height: 8),
               DropdownButtonFormField<VehicleType>(
                 value: _selectedType,
                 items: VehicleType.values
@@ -204,9 +226,80 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 title: const Text('Available'),
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => _submit(appState),
-                child: const Text('Add Vehicle'),
+              if (pickedFile != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Image.file(
+                    File(pickedFile!.path),
+                    height: 180,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 160, // Set a fixed smaller width
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final tempPickedFile = await picker.pickImage(
+                        source: ImageSource.gallery,
+                      ); // Dismiss keyboard and reset insets
+                      if (context.mounted && tempPickedFile != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Image added!')),
+                        );
+                      }
+                      if (context.mounted) {
+                        // Dismiss the keyboard if it is open
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        // Optionally, unfocus any other focus nodes
+                        // FocusManager.instance.primaryFocus?.unfocus();
+                        FocusScope.of(context).unfocus();
+                      }
+                      setState(() {
+                        pickedFile = tempPickedFile;
+                      });
+                    },
+                    child: Text(
+                      'Add Image',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 160, // Set a fixed smaller width
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                    onPressed: isLoading ? null : () => _submit(appState),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            'Add Vehicle',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
+                          ),
+                  ),
+                ),
               ),
             ],
           ),
