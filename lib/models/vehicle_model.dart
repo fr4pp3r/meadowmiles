@@ -42,7 +42,6 @@ class Vehicle {
           : (map['pricePerDay'] ?? 0.0),
       isAvailable: map['isAvailable'] ?? true,
       vehicleType: VehicleType.values.firstWhere(
-        // ignore: prefer_interpolation_to_compose_strings
         (e) => e.toString() == 'VehicleType.' + (map['vehicleType'] ?? 'car'),
         orElse: () => VehicleType.car,
       ),

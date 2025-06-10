@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 ThemeData meadowMilesTheme() {
   return ThemeData(
     colorScheme: ColorScheme.fromSeed(
-      surface: Color.fromARGB(255, 255, 255, 255),
       seedColor: Color.fromARGB(255, 92, 92, 92),
       primary: Color.fromARGB(255, 92, 92, 92),
       secondary: Color.fromARGB(255, 49, 49, 49),

@@ -34,9 +34,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
       appBar: AppBar(
         title: const Text('Owner Dashboard'),
         centerTitle: true,
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0, // Prevent color/elevation change on scroll
+        forceMaterialTransparency: true,
         actions: [
           IconButton(
             icon: const CircleAvatar(

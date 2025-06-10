@@ -58,20 +58,24 @@ class AppState extends ChangeNotifier {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       await loadCurrentUserModel();
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Dismiss loading dialog
-        Future.delayed(Duration.zero, () {
-          if (userModel?.userType == UserModelType.rentee) {
-            if (context.mounted) {
-              Navigator.of(context).pushReplacementNamed('/rentee_dashboard');
-            }
-          } else {
-            if (context.mounted) {
-              signOut(context);
-            }
-          }
-        });
-      }
+      // if (context.mounted) {
+      //   Navigator.of(context).pop(); // Dismiss loading dialog
+      //   Future.delayed(Duration.zero, () {
+      //     if (userModel?.userType == UserModelType.rentee) {
+      //       if (context.mounted) {
+      //         Navigator.of(context).pushReplacementNamed('/rentee_dashboard');
+      //       }
+      //     } else if (userModel?.userType == UserModelType.renter) {
+      //       if (context.mounted) {
+      //         Navigator.of(context).pushReplacementNamed('/renter_dashboard');
+      //       }
+      //     } else {
+      //       if (context.mounted) {
+      //         signOut(context);
+      //       }
+      //     }
+      //   });
+      // }
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // Dismiss loading dialog

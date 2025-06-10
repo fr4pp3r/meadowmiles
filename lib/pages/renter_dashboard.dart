@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/appstate.dart';
+import 'package:meadowmiles/pages/renter/home/home_tab.dart';
 import 'package:provider/provider.dart';
 
 class RenterDashboardPage extends StatefulWidget {
@@ -13,8 +14,7 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
   int _selectedIndex = 0;
 
   static final List<Widget> _pages = <Widget>[
-    // TODO: Replace with actual Home/Search page
-    Center(child: Text('Home - Search & Rent Vehicles')),
+    HomeTab(),
     // TODO: Replace with actual Bookings page
     Center(child: Text('Bookings - View, Edit, Cancel')),
     // TODO: Replace with actual Rented Vehicles page
@@ -35,9 +35,7 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
       appBar: AppBar(
         title: const Text('MeadowMiles'),
         centerTitle: true,
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0, // Prevent color/elevation change on scroll
+        forceMaterialTransparency: true,
         actions: [
           IconButton(
             icon: const CircleAvatar(
