@@ -3,6 +3,7 @@ import 'package:meadowmiles/components/vehicle_cards.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meadowmiles/pages/renter/home/home_browse.dart';
+import 'package:meadowmiles/pages/vehicle/view_vehicle.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -259,12 +260,22 @@ class _HomeTabState extends State<HomeTab> {
                           ? [Text('No vehicles found.')]
                           : _vehicles
                                 .map(
-                                  (vehicle) => SizedBox(
-                                    width: 400,
-                                    height: 250,
-                                    child: VehicleCard(
-                                      vehicle: vehicle,
-                                      disableHero: true,
+                                  (vehicle) => GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ViewVehiclePage(vehicle: vehicle),
+                                        ),
+                                      );
+                                    },
+                                    child: SizedBox(
+                                      width: 400,
+                                      height: 250,
+                                      child: VehicleCard(
+                                        vehicle: vehicle,
+                                        disableHero: true,
+                                      ),
                                     ),
                                   ),
                                 )

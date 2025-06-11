@@ -53,11 +53,19 @@ class LoginPage extends StatelessWidget {
         // Navigate to the appropriate dashboard based on user type
         if (userModel?.userType == UserModelType.rentee) {
           if (context.mounted) {
-            Navigator.pushReplacementNamed(context, '/rentee_dashboard');
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/rentee_dashboard',
+              (route) => false,
+            );
           }
         } else if (userModel?.userType == UserModelType.renter) {
           if (context.mounted) {
-            Navigator.pushReplacementNamed(context, '/renter_dashboard');
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/renter_dashboard',
+              (route) => false,
+            );
           }
         }
       }

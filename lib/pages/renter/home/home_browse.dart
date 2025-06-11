@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:meadowmiles/components/vehicle_cards.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:meadowmiles/pages/vehicle/view_vehicle.dart';
 
 class HomeBrowsePage extends StatefulWidget {
   final VehicleType? vehicleType;
@@ -83,12 +84,21 @@ class _HomeBrowsePageState extends State<HomeBrowsePage> {
               itemCount: _results.length,
               itemBuilder: (context, index) {
                 final vehicle = _results[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ViewVehiclePage(vehicle: vehicle),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: VehicleCard(vehicle: vehicle, disableHero: true),
                   ),
-                  child: VehicleCard(vehicle: vehicle, disableHero: true),
                 );
               },
             ),
