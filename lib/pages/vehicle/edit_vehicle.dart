@@ -6,15 +6,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ViewVehiclePage extends StatefulWidget {
+class EditVehiclePage extends StatefulWidget {
   final Vehicle vehicle;
-  const ViewVehiclePage({super.key, required this.vehicle});
+  const EditVehiclePage({super.key, required this.vehicle});
 
   @override
-  State<ViewVehiclePage> createState() => _ViewVehiclePageState();
+  State<EditVehiclePage> createState() => _EditVehiclePageState();
 }
 
-class _ViewVehiclePageState extends State<ViewVehiclePage> {
+class _EditVehiclePageState extends State<EditVehiclePage> {
   XFile? _currentImage;
 
   late TextEditingController makeController;

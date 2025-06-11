@@ -1,48 +1,30 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:meadowmiles/main.dart';
 import 'package:meadowmiles/models/user_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 
-class AppState extends ChangeNotifier {
+class AuthState extends ChangeNotifier {
   final _auth = FirebaseAuth.instance;
 
   User? get currentUser => _auth.currentUser;
 
-  UserModel? _userModel;
-  UserModel? get userModel => _userModel;
-
-  // Recommended: Async method to fetch the current user's Firestore profile
-  Future<UserModel?> fetchCurrentUserModel() async {
+  Future<UserModel?> fetchCurrentUserModel(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const LoadingDialog(),
+    );
     if (currentUser == null) return null;
     final doc = await FirebaseFirestore.instance
         .collection('users')
         .doc(currentUser!.uid)
         .get();
     if (!doc.exists) return null;
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
     return UserModel.fromMap(doc.data()!, uid: doc.id);
-  }
-
-  Future<void> loadCurrentUserModel() async {
-    if (currentUser == null) {
-      _userModel = null;
-      notifyListeners();
-      return;
-    }
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser!.uid)
-        .get();
-    if (!doc.exists) {
-      _userModel = null;
-    } else {
-      _userModel = UserModel.fromMap(doc.data()!, uid: doc.id);
-    }
-    notifyListeners();
   }
 
   Future<void> signIn(
@@ -57,25 +39,6 @@ class AppState extends ChangeNotifier {
     );
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      await loadCurrentUserModel();
-      // if (context.mounted) {
-      //   Navigator.of(context).pop(); // Dismiss loading dialog
-      //   Future.delayed(Duration.zero, () {
-      //     if (userModel?.userType == UserModelType.rentee) {
-      //       if (context.mounted) {
-      //         Navigator.of(context).pushReplacementNamed('/rentee_dashboard');
-      //       }
-      //     } else if (userModel?.userType == UserModelType.renter) {
-      //       if (context.mounted) {
-      //         Navigator.of(context).pushReplacementNamed('/renter_dashboard');
-      //       }
-      //     } else {
-      //       if (context.mounted) {
-      //         signOut(context);
-      //       }
-      //     }
-      //   });
-      // }
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // Dismiss loading dialog
@@ -110,7 +73,6 @@ class AppState extends ChangeNotifier {
       builder: (context) => const LoadingDialog(),
     );
     await _auth.signOut();
-    _userModel = null;
     if (context.mounted) {
       Navigator.of(context).pop();
     }
@@ -140,13 +102,13 @@ class AppState extends ChangeNotifier {
             ...userModel.toMap(),
             'createdAt': FieldValue.serverTimestamp(),
           });
-      await loadCurrentUserModel();
+      // Sign out the user after registration
+      await _auth.signOut();
       if (context.mounted) {
         Navigator.of(context).pop(); // Dismiss loading dialog
         Future.delayed(Duration.zero, () {
           if (context.mounted) {
             showDialog(
-              barrierDismissible: false,
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Registration Successful'),
@@ -168,7 +130,6 @@ class AppState extends ChangeNotifier {
       Future.delayed(Duration.zero, () {
         if (context.mounted) {
           showDialog(
-            barrierDismissible: false,
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Registration failed'),
@@ -186,23 +147,5 @@ class AppState extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
-  }
-
-  Future<String?> uploadVehicleImage(XFile pickedFile) async {
-    final file = File(pickedFile.path);
-    final fileName = 'vehicle_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-    final storageResponse = await Supabase.instance.client.storage
-        .from('vehicle-img') // your bucket name
-        .upload(fileName, file);
-
-    if (storageResponse.isEmpty) return null;
-
-    // Get the public URL
-    final publicUrl = Supabase.instance.client.storage
-        .from('vehicle-img')
-        .getPublicUrl(fileName);
-
-    return publicUrl;
   }
 }

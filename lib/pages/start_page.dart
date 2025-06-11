@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/appstate.dart';
 import 'package:meadowmiles/models/user_model.dart';
+import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
 class StartPage extends StatelessWidget {
@@ -27,7 +27,7 @@ class StartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<AppState>();
+    var authState = context.watch<AuthState>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -80,16 +80,17 @@ class StartPage extends StatelessWidget {
                       // if (appState.currentUser != null) {
                       //   appState.signOut(context);
                       // }
-                      if (appState.currentUser == null) {
+                      if (authState.currentUser == null) {
                         Navigator.pushNamed(context, '/login');
                       } else {
-                        await appState.loadCurrentUserModel();
-                        if (appState.userModel?.userType ==
-                            UserModelType.rentee) {
+                        final userModel = await authState.fetchCurrentUserModel(
+                          context,
+                        );
+                        if (userModel?.userType == UserModelType.rentee) {
                           if (context.mounted) {
                             Navigator.pushNamed(context, '/rentee_dashboard');
                           }
-                        } else if (appState.userModel?.userType ==
+                        } else if (userModel?.userType ==
                             UserModelType.renter) {
                           if (context.mounted) {
                             Navigator.pushNamed(context, '/renter_dashboard');

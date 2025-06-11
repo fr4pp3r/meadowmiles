@@ -32,6 +32,7 @@ class _HomeBrowsePageState extends State<HomeBrowsePage> {
 
   Future<void> _searchVehicles() async {
     setState(() => _isLoading = true);
+    // Only filter by isAvailable and vehicleType in Firestore
     Query query = FirebaseFirestore.instance
         .collection('vehicles')
         .where('isAvailable', isEqualTo: true);
@@ -41,34 +42,27 @@ class _HomeBrowsePageState extends State<HomeBrowsePage> {
         isEqualTo: widget.vehicleType!.toString().split('.').last,
       );
     }
-    if (widget.make != null && widget.make!.trim().isNotEmpty) {
-      query = query.where(
-        'make',
-        isGreaterThanOrEqualTo: widget.make,
-        isLessThanOrEqualTo: widget.make! + '\uf8ff',
-      );
-    }
-    if (widget.model != null && widget.model!.trim().isNotEmpty) {
-      query = query.where(
-        'model',
-        isGreaterThanOrEqualTo: widget.model,
-        isLessThanOrEqualTo: widget.model! + '\uf8ff',
-      );
-    }
-    if (widget.color != null && widget.color!.trim().isNotEmpty) {
-      query = query.where(
-        'color',
-        isGreaterThanOrEqualTo: widget.color,
-        isLessThanOrEqualTo: widget.color! + '\uf8ff',
-      );
-    }
     final snapshot = await query.get();
+    final makeFilter = (widget.make ?? '').trim().toLowerCase();
+    final modelFilter = (widget.model ?? '').trim().toLowerCase();
+    final colorFilter = (widget.color ?? '').trim().toLowerCase();
     setState(() {
       _results = snapshot.docs
           .map(
             (doc) =>
                 Vehicle.fromMap(doc.data() as Map<String, dynamic>, id: doc.id),
           )
+          .where((vehicle) {
+            final make = vehicle.make.toLowerCase();
+            final model = vehicle.model.toLowerCase();
+            final color = vehicle.color.toLowerCase();
+            final matchesMake = makeFilter.isEmpty || make.contains(makeFilter);
+            final matchesModel =
+                modelFilter.isEmpty || model.contains(modelFilter);
+            final matchesColor =
+                colorFilter.isEmpty || color.contains(colorFilter);
+            return matchesMake && matchesModel && matchesColor;
+          })
           .toList();
       _isLoading = false;
     });

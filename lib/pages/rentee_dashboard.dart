@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/appstate.dart';
-import 'package:meadowmiles/pages/rentee/vehicle/vehicle_tab.dart';
+import 'package:meadowmiles/states/appstate.dart';
+import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
+import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
 class RenteeDashboardPage extends StatefulWidget {
@@ -28,7 +29,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<AppState>();
+    var authState = context.watch<AuthState>();
 
     return Scaffold(
       appBar: AppBar(
@@ -43,7 +44,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
             ),
             onPressed: () {
               // Handle profile action
-              appState.signOut(context).then((_) {
+              authState.signOut(context).then((_) {
                 if (context.mounted) {
                   Navigator.pop(context);
                 }
