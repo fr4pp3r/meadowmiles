@@ -28,12 +28,14 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Future<void> _loadVehicles() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final query = await FirebaseFirestore.instance
           .collection('vehicles')
           .where('isAvailable', isEqualTo: true)
           .get();
+      if (!mounted) return;
       setState(() {
         _vehicles = query.docs
             .map((doc) => Vehicle.fromMap(doc.data(), id: doc.id))
@@ -41,6 +43,7 @@ class _HomeTabState extends State<HomeTab> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
       // Optionally show error
     }

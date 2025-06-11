@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/renter/home/home_tab.dart';
+import 'package:meadowmiles/pages/renter/renterbook_tab.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
@@ -15,8 +16,7 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
 
   static final List<Widget> _pages = <Widget>[
     HomeTab(),
-    // TODO: Replace with actual Bookings page
-    Center(child: Text('Bookings - View, Edit, Cancel')),
+    RenterBookTab(),
     // TODO: Replace with actual Rented Vehicles page
     Center(child: Text('Rented Vehicles - Return & Pay')),
   ];

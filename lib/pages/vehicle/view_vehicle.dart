@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
+import 'package:meadowmiles/pages/booking/add_booking.dart';
 
 class ViewVehiclePage extends StatefulWidget {
   final Vehicle vehicle;
@@ -116,6 +117,13 @@ class _ViewVehiclePageState extends State<ViewVehiclePage> {
               onPressed: () {
                 setState(() {});
                 // Here you would typically update the vehicle's availability in the database
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AddBookingPage(vehicle: widget.vehicle),
+                  ),
+                );
               },
               child: Text('Rent this vehicle!'),
             ),
