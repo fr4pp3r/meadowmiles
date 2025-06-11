@@ -3,14 +3,20 @@ import 'package:meadowmiles/models/vehicle_model.dart';
 
 class VehicleCard extends StatelessWidget {
   final Vehicle vehicle;
+  final bool disableHero;
 
-  const VehicleCard({super.key, required this.vehicle});
+  const VehicleCard({
+    super.key,
+    required this.vehicle,
+    this.disableHero = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
       child: Card(
+        color: Theme.of(context).colorScheme.primary.withAlpha(1),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
@@ -55,25 +61,40 @@ class VehicleCard extends StatelessWidget {
                     ),
                   ),
                   child: vehicle.imageUrl.isNotEmpty
-                      ? Hero(
-                          tag: 'vehicle-image-${vehicle.id}',
-                          child: Image.network(
-                            vehicle.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
+                      ? (disableHero
+                            ? Image.network(
+                                vehicle.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: Colors.grey.shade300,
+                                      child: const Icon(Icons.car_repair),
+                                    ),
+                              )
+                            : Hero(
+                                tag: 'vehicle-image-${vehicle.id}',
+                                child: Image.network(
+                                  vehicle.imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(Icons.car_repair),
+                                      ),
+                                ),
+                              ))
+                      : (disableHero
+                            ? Container(
+                                color: Colors.grey.shade300,
+                                child: const Icon(Icons.car_repair),
+                              )
+                            : Hero(
+                                tag: 'vehicle-image-${vehicle.id}',
+                                child: Container(
                                   color: Colors.grey.shade300,
                                   child: const Icon(Icons.car_repair),
                                 ),
-                          ),
-                        )
-                      : Hero(
-                          tag: 'vehicle-image-${vehicle.id}',
-                          child: Container(
-                            color: Colors.grey.shade300,
-                            child: const Icon(Icons.car_repair),
-                          ),
-                        ),
+                              )),
                 ),
               ),
             ],

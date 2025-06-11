@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/appstate.dart';
 import 'package:meadowmiles/models/user_model.dart';
+import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatelessWidget {
@@ -25,7 +25,7 @@ class LoginPage extends StatelessWidget {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _login(BuildContext context, AppState appState) async {
+  void _login(BuildContext context, AuthState authState) async {
     final email = _usernameController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
@@ -45,13 +45,28 @@ class LoginPage extends StatelessWidget {
       );
       return;
     }
-    await appState.signIn(email, password, context);
+    await authState.signIn(email, password, context);
     _clearFields();
-    if (appState.currentUser != null) {
-      // Navigate to the appropriate dashboard based on user type
-      if (appState.userModel?.userType == UserModelType.rentee) {
-        if (context.mounted) {
-          Navigator.pushReplacementNamed(context, '/rentee_dashboard');
+    if (authState.currentUser != null) {
+      if (context.mounted) {
+        final userModel = await authState.fetchCurrentUserModel(context);
+        // Navigate to the appropriate dashboard based on user type
+        if (userModel?.userType == UserModelType.rentee) {
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/rentee_dashboard',
+              (route) => false,
+            );
+          }
+        } else if (userModel?.userType == UserModelType.renter) {
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/renter_dashboard',
+              (route) => false,
+            );
+          }
         }
       }
     }
@@ -64,7 +79,7 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<AppState>();
+    var authState = context.watch<AuthState>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -179,7 +194,7 @@ class LoginPage extends StatelessWidget {
                           vertical: 8,
                         ),
                       ),
-                      onPressed: () => _login(context, appState),
+                      onPressed: () => _login(context, authState),
                     ),
                   ),
                   const SizedBox(height: 16),

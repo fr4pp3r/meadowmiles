@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/appstate.dart';
-import 'package:meadowmiles/pages/login_page.dart';
-import 'package:meadowmiles/pages/register_page.dart';
+import 'package:meadowmiles/states/appstate.dart';
+import 'package:meadowmiles/states/authstate.dart';
+import 'package:meadowmiles/pages/auth/login_page.dart';
+import 'package:meadowmiles/pages/auth/register_page.dart';
 import 'package:meadowmiles/pages/rentee_dashboard.dart';
+import 'package:meadowmiles/pages/renter_dashboard.dart';
 import 'package:meadowmiles/pages/start_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:meadowmiles/theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +21,13 @@ void main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcW52ZGxlZmFsdHZxbG5ieXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1MzYwMTMsImV4cCI6MjA2NTExMjAxM30.4ppaD5zRt9eLrhJGDrSMgr-OZRnxjCqXR3tPznxNJgM',
   );
   runApp(
-    ChangeNotifierProvider(create: (_) => AppState(), child: const MyApp()),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppState()),
+        ChangeNotifierProvider(create: (_) => AuthState()),
+      ],
+      child: const MyApp(),
+    ),
   );
 }
 
@@ -37,6 +45,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/rentee_dashboard': (context) => const RenteeDashboardPage(),
+        '/renter_dashboard': (context) => const RenterDashboardPage(),
       },
       home: const StartPage(),
     );

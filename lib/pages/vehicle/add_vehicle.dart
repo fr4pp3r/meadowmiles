@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/appstate.dart';
+import 'package:meadowmiles/states/appstate.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
+import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -42,7 +43,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
     super.dispose();
   }
 
-  Future<void> _submit(AppState appState) async {
+  Future<void> _submit(AuthState authState, AppState appState) async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => isLoading = true);
       if (pickedFile != null) {
@@ -69,7 +70,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
       }
       final vehicle = Vehicle(
         id: Vehicle.generateVehicleId(),
-        ownerId: appState.currentUser!.uid,
+        ownerId: authState.currentUser!.uid,
         make: _makeController.text.trim(),
         model: _modelController.text.trim(),
         plateNumber: _plateController.text.trim(),
@@ -102,6 +103,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
 
   @override
   Widget build(BuildContext context) {
+    var authState = context.watch<AuthState>();
     var appState = context.watch<AppState>();
 
     return Scaffold(
@@ -282,7 +284,9 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
-                    onPressed: isLoading ? null : () => _submit(appState),
+                    onPressed: isLoading
+                        ? null
+                        : () => _submit(authState, appState),
                     child: isLoading
                         ? const SizedBox(
                             width: 24,

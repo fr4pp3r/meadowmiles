@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/appstate.dart';
 import 'package:meadowmiles/components/vehicle_cards.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
-import 'package:meadowmiles/pages/rentee/vehicle/add_vehicle.dart';
-import 'package:meadowmiles/pages/rentee/vehicle/view_vehicle.dart';
+import 'package:meadowmiles/pages/vehicle/add_vehicle.dart';
+import 'package:meadowmiles/pages/vehicle/edit_vehicle.dart';
+import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
 class VehicleTab extends StatefulWidget {
@@ -29,8 +29,8 @@ class _VehicleTabState extends State<VehicleTab> {
 
   Future<void> _fetchVehicles() async {
     setState(() => _isLoading = true);
-    final appState = Provider.of<AppState>(context, listen: false);
-    final uid = appState.currentUser?.uid;
+    final authState = Provider.of<AuthState>(context, listen: false);
+    final uid = authState.currentUser?.uid;
     if (uid == null) {
       setState(() {
         vehicles = [];
@@ -135,7 +135,7 @@ class _VehicleTabState extends State<VehicleTab> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      ViewVehiclePage(vehicle: vehicle),
+                                      EditVehiclePage(vehicle: vehicle),
                                 ),
                               );
                               setState(() {
