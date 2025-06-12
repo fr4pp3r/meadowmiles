@@ -131,14 +131,18 @@ class _VehicleTabState extends State<VehicleTab> {
                           final vehicle = filteredVehicles[index];
                           return VehicleCard(
                             vehicle: vehicle,
-                            onTap: () {
-                              Navigator.push(
+                            onTap: () async {
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       EditVehiclePage(vehicle: vehicle),
                                 ),
                               );
+                              if (result != null) {
+                                // Vehicle was edited, reload the list
+                                await _fetchVehicles();
+                              }
                             },
                           );
                         },

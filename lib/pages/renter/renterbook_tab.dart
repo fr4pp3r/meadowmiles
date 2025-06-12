@@ -4,6 +4,7 @@ import 'package:meadowmiles/models/booking_model.dart';
 import 'package:provider/provider.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/components/booking_card.dart';
+import 'package:meadowmiles/pages/booking/renterview_booking.dart';
 
 class RenterBookTab extends StatelessWidget {
   const RenterBookTab({super.key});
@@ -79,33 +80,10 @@ class RenterBookTab extends StatelessWidget {
                     }
                   : null,
               onView: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Booking Details'),
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Booking ID: ${booking.id}'),
-                        const SizedBox(height: 8),
-                        Text(
-                          'From: ${booking.rentDate.toLocal().toString().split(' ')[0]}',
-                        ),
-                        Text(
-                          'To: ${booking.returnDate.toLocal().toString().split(' ')[0]}',
-                        ),
-                        Text(
-                          'Status: ${booking.status.toString().split('.').last}',
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Close'),
-                      ),
-                    ],
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RenterViewBookingPage(booking: booking),
                   ),
                 );
               },

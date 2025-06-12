@@ -31,39 +31,61 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
   Widget build(BuildContext context) {
     var authState = context.watch<AuthState>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('MeadowMiles'),
-        centerTitle: true,
-        forceMaterialTransparency: true,
-        actions: [
-          IconButton(
-            icon: const CircleAvatar(
-              // backgroundImage: AssetImage('assets/profile_placeholder.png'),
-              backgroundColor: Colors.red,
+    return WillPopScope(
+      onWillPop: () async {
+        final shouldExit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Exit App'),
+            content: const Text('Are you sure you want to exit MeadowMiles?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Exit'),
+              ),
+            ],
+          ),
+        );
+        return shouldExit ?? false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('MeadowMiles'),
+          centerTitle: true,
+          forceMaterialTransparency: true,
+          actions: [
+            IconButton(
+              icon: const CircleAvatar(
+                // backgroundImage: AssetImage('assets/profile_placeholder.png'),
+                backgroundColor: Colors.red,
+              ),
+              onPressed: () {
+                // Handle profile action
+                authState.signOut(context);
+              },
             ),
-            onPressed: () {
-              // Handle profile action
-              authState.signOut(context);
-            },
-          ),
-        ],
-      ),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book_online),
-            label: 'Bookings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Rented',
-          ),
-        ],
+          ],
+        ),
+        body: _pages[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book_online),
+              label: 'Bookings',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.directions_car),
+              label: 'Rented',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -14,6 +14,9 @@ class Booking {
   final BookingStatus status;
   final String ratingRef; // Reference to a rating document (nullable)
   final String address; // Address for the booking (pickup/return location)
+  final double rate; // Rating value (0-5)
+  final String feedback; // Feedback text
+  final double totalPrice; // Total price for the booking
 
   Booking({
     required this.id,
@@ -26,6 +29,9 @@ class Booking {
     this.status = BookingStatus.pending,
     this.ratingRef = '',
     this.address = '',
+    this.rate = 0,
+    this.feedback = '',
+    this.totalPrice = 0,
   });
 
   factory Booking.fromMap(Map<String, dynamic> map, {String? id}) {
@@ -43,6 +49,13 @@ class Booking {
       ),
       ratingRef: map['ratingRef'] ?? '',
       address: map['address'] ?? '',
+      rate: (map['rate'] is int)
+          ? (map['rate'] as int).toDouble()
+          : (map['rate'] ?? 0).toDouble(),
+      feedback: map['feedback'] ?? '',
+      totalPrice: (map['totalPrice'] is int)
+          ? (map['totalPrice'] as int).toDouble()
+          : (map['totalPrice'] ?? 0).toDouble(),
     );
   }
 
@@ -58,6 +71,9 @@ class Booking {
       'status': status.toString().split('.').last,
       'ratingRef': ratingRef,
       'address': address,
+      'rate': rate,
+      'feedback': feedback,
+      'totalPrice': totalPrice,
     };
   }
 

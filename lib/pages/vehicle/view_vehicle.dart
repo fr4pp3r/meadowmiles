@@ -156,7 +156,7 @@ class _ViewVehiclePageState extends State<ViewVehiclePage> {
                             const SizedBox(width: 4),
                             Text(
                               // widget.vehicle.location,
-                              'Location: ${widget.vehicle.plateNumber}',
+                              'Location: ${widget.vehicle.location}',
                               style: TextStyle(
                                 fontSize: 15,
                                 color: Theme.of(context).colorScheme.primary,
@@ -224,8 +224,9 @@ class _ViewVehiclePageState extends State<ViewVehiclePage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          // widget.vehicle.description,
-                          'This is a sample description of the vehicle. It provides details about the vehicle\'s features, condition, and any other relevant information that potential renters should know.',
+                          widget.vehicle.description.isNotEmpty
+                              ? widget.vehicle.description
+                              : 'No description provided.',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,

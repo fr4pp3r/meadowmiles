@@ -81,6 +81,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
     final renterId = authState.currentUser?.uid;
     if (renterId == null || _rentDate == null || _returnDate == null) return;
     setState(() => _isLoading = true);
+    final total = _totalAmount ?? 0.0;
     final booking = Booking(
       id: Booking.generateBookingId(),
       renterId: renterId,
@@ -92,6 +93,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
       status: BookingStatus.pending,
       ratingRef: '',
       address: '', // Address left empty for owner to fill
+      totalPrice: total,
     );
     try {
       await FirebaseFirestore.instance

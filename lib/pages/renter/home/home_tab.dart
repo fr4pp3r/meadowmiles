@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/components/vehicle_card2.dart';
-import 'package:meadowmiles/components/vehicle_cards.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meadowmiles/pages/renter/home/home_browse.dart';
@@ -21,12 +20,16 @@ class _HomeTabState extends State<HomeTab> {
   DateTimeRange? _selectedDateRange;
   final _formKey = GlobalKey<FormState>();
   List<Vehicle> _vehicles = [];
+  List<Vehicle> _popularVehicles = [];
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadVehicles();
+    _fetchTopRatedVehicles(5).then((list) {
+      if (mounted) setState(() => _popularVehicles = list);
+    });
   }
 
   Future<void> _loadVehicles() async {
@@ -49,6 +52,45 @@ class _HomeTabState extends State<HomeTab> {
       setState(() => _isLoading = false);
       // Optionally show error
     }
+  }
+
+  Future<List<Vehicle>> _fetchTopRatedVehicles(int count) async {
+    final vehiclesSnapshot = await FirebaseFirestore.instance
+        .collection('vehicles')
+        .where('isAvailable', isEqualTo: true)
+        .get();
+    final vehicles = vehiclesSnapshot.docs
+        .map((doc) => Vehicle.fromMap(doc.data(), id: doc.id))
+        .toList();
+    // For each vehicle, fetch its average rating
+    final List<Map<String, dynamic>> vehicleRatings = [];
+    for (final vehicle in vehicles) {
+      final bookingsSnapshot = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('vehicleId', isEqualTo: vehicle.id)
+          .get();
+      double total = 0;
+      int countRatings = 0;
+      for (final doc in bookingsSnapshot.docs) {
+        final data = doc.data();
+        final rate = (data['rate'] is int)
+            ? (data['rate'] as int).toDouble()
+            : (data['rate'] ?? 0).toDouble();
+        if (rate > 0) {
+          total += rate;
+          countRatings++;
+        }
+      }
+      final avg = countRatings == 0 ? 0.0 : total / countRatings;
+      vehicleRatings.add({'vehicle': vehicle, 'avg': avg});
+    }
+    vehicleRatings.sort(
+      (a, b) => (b['avg'] as double).compareTo(a['avg'] as double),
+    );
+    return vehicleRatings
+        .take(count)
+        .map((e) => e['vehicle'] as Vehicle)
+        .toList();
   }
 
   @override
@@ -317,9 +359,9 @@ class _HomeTabState extends State<HomeTab> {
                       child: Center(child: CircularProgressIndicator()),
                     )
                   : Row(
-                      children: _vehicles.isEmpty
+                      children: _popularVehicles.isEmpty
                           ? [Text('No vehicles found.')]
-                          : _vehicles
+                          : _popularVehicles
                                 .map(
                                   (vehicle) => GestureDetector(
                                     onTap: () {
