@@ -44,11 +44,7 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
             ),
             onPressed: () {
               // Handle profile action
-              authState.signOut(context).then((_) {
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              });
+              authState.signOut(context);
             },
           ),
         ],

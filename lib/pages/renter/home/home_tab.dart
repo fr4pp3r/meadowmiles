@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meadowmiles/components/vehicle_card2.dart';
 import 'package:meadowmiles/components/vehicle_cards.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,6 +18,7 @@ class _HomeTabState extends State<HomeTab> {
   final TextEditingController _makeController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
   final TextEditingController _colorController = TextEditingController();
+  DateTimeRange? _selectedDateRange;
   final _formKey = GlobalKey<FormState>();
   List<Vehicle> _vehicles = [];
   bool _isLoading = false;
@@ -182,6 +184,51 @@ class _HomeTabState extends State<HomeTab> {
                               return null;
                             },
                           ),
+                          const SizedBox(height: 16.0),
+                          GestureDetector(
+                            onTap: () async {
+                              final now = DateTime.now();
+                              final picked = await showDateRangePicker(
+                                context: context,
+                                firstDate: now,
+                                lastDate: now.add(const Duration(days: 365)),
+                                initialDateRange: _selectedDateRange,
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _selectedDateRange = picked;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _selectedDateRange == null
+                                        ? 'Select Date Range'
+                                        : '${_selectedDateRange!.start.month}/${_selectedDateRange!.start.day}/${_selectedDateRange!.start.year} - '
+                                              '${_selectedDateRange!.end.month}/${_selectedDateRange!.end.day}/${_selectedDateRange!.end.year}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  const Icon(Icons.calendar_today, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24.0),
                           SizedBox(
                             width: 150,
@@ -192,8 +239,9 @@ class _HomeTabState extends State<HomeTab> {
                                 ).colorScheme.primary,
                               ),
                               onPressed: () {
-                                if (_formKey.currentState?.validate() ??
-                                    false) {
+                                if ((_formKey.currentState?.validate() ??
+                                        false) &&
+                                    _selectedDateRange != null) {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => HomeBrowsePage(
@@ -201,6 +249,16 @@ class _HomeTabState extends State<HomeTab> {
                                         make: _makeController.text.trim(),
                                         model: _modelController.text.trim(),
                                         color: _colorController.text.trim(),
+                                        startDate: _selectedDateRange!.start,
+                                        endDate: _selectedDateRange!.end,
+                                      ),
+                                    ),
+                                  );
+                                } else if (_selectedDateRange == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Please select a date range.',
                                       ),
                                     ),
                                   );
@@ -272,13 +330,18 @@ class _HomeTabState extends State<HomeTab> {
                                         ),
                                       );
                                     },
-                                    child: SizedBox(
-                                      width: 400,
-                                      height: 250,
-                                      child: VehicleCard(
-                                        vehicle: vehicle,
-                                        disableHero: true,
-                                      ),
+                                    child: VehicleCard2(
+                                      vehicle: vehicle,
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ViewVehiclePage(
+                                                  vehicle: vehicle,
+                                                ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                 )

@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/components/booking_card.dart';
 
-class RenterBookTab extends StatelessWidget {
-  const RenterBookTab({super.key});
+class RenteeBookTab extends StatelessWidget {
+  const RenteeBookTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class RenterBookTab extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('bookings')
-          .where('renterId', isEqualTo: userId)
+          .where('ownerId', isEqualTo: userId)
           .orderBy('rentDate', descending: true)
           .snapshots(),
       builder: (context, snapshot) {

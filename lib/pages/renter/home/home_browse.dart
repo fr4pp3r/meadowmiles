@@ -9,12 +9,16 @@ class HomeBrowsePage extends StatefulWidget {
   final String? make;
   final String? model;
   final String? color;
+  final DateTime? startDate;
+  final DateTime? endDate;
   const HomeBrowsePage({
     super.key,
     this.vehicleType,
     this.make,
     this.model,
     this.color,
+    this.startDate,
+    this.endDate,
   });
 
   @override
@@ -33,7 +37,6 @@ class _HomeBrowsePageState extends State<HomeBrowsePage> {
 
   Future<void> _searchVehicles() async {
     setState(() => _isLoading = true);
-    // Only filter by isAvailable and vehicleType in Firestore
     Query query = FirebaseFirestore.instance
         .collection('vehicles')
         .where('isAvailable', isEqualTo: true);
@@ -43,28 +46,63 @@ class _HomeBrowsePageState extends State<HomeBrowsePage> {
         isEqualTo: widget.vehicleType!.toString().split('.').last,
       );
     }
-    final snapshot = await query.get();
+    final vehicleSnapshot = await query.get();
     final makeFilter = (widget.make ?? '').trim().toLowerCase();
     final modelFilter = (widget.model ?? '').trim().toLowerCase();
     final colorFilter = (widget.color ?? '').trim().toLowerCase();
+
+    // Date range filtering
+    DateTime? startDate = widget.startDate;
+    DateTime? endDate = widget.endDate;
+
+    List<Vehicle> filteredVehicles = vehicleSnapshot.docs
+        .map(
+          (doc) =>
+              Vehicle.fromMap(doc.data() as Map<String, dynamic>, id: doc.id),
+        )
+        .where((vehicle) {
+          final make = vehicle.make.toLowerCase();
+          final model = vehicle.model.toLowerCase();
+          final color = vehicle.color.toLowerCase();
+          final matchesMake = makeFilter.isEmpty || make.contains(makeFilter);
+          final matchesModel =
+              modelFilter.isEmpty || model.contains(modelFilter);
+          final matchesColor =
+              colorFilter.isEmpty || color.contains(colorFilter);
+          return matchesMake && matchesModel && matchesColor;
+        })
+        .toList();
+
+    // If date range is selected, filter out vehicles that are booked in that range
+    if (startDate != null && endDate != null) {
+      List<Vehicle> availableVehicles = [];
+      for (final vehicle in filteredVehicles) {
+        final bookingsSnapshot = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('vehicleId', isEqualTo: vehicle.id)
+            .where('status', whereIn: ['pending', 'onProcess', 'active'])
+            .get();
+        bool isAvailable = true;
+        for (final doc in bookingsSnapshot.docs) {
+          final data = doc.data();
+          final bookingStart = (data['rentDate'] as Timestamp).toDate();
+          final bookingEnd = (data['returnDate'] as Timestamp).toDate();
+          // Check for overlap
+          if (!(endDate.isBefore(bookingStart) ||
+              startDate.isAfter(bookingEnd))) {
+            isAvailable = false;
+            break;
+          }
+        }
+        if (isAvailable) {
+          availableVehicles.add(vehicle);
+        }
+      }
+      filteredVehicles = availableVehicles;
+    }
+
     setState(() {
-      _results = snapshot.docs
-          .map(
-            (doc) =>
-                Vehicle.fromMap(doc.data() as Map<String, dynamic>, id: doc.id),
-          )
-          .where((vehicle) {
-            final make = vehicle.make.toLowerCase();
-            final model = vehicle.model.toLowerCase();
-            final color = vehicle.color.toLowerCase();
-            final matchesMake = makeFilter.isEmpty || make.contains(makeFilter);
-            final matchesModel =
-                modelFilter.isEmpty || model.contains(modelFilter);
-            final matchesColor =
-                colorFilter.isEmpty || color.contains(colorFilter);
-            return matchesMake && matchesModel && matchesColor;
-          })
-          .toList();
+      _results = filteredVehicles;
       _isLoading = false;
     });
   }
@@ -84,20 +122,21 @@ class _HomeBrowsePageState extends State<HomeBrowsePage> {
               itemCount: _results.length,
               itemBuilder: (context, index) {
                 final vehicle = _results[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ViewVehiclePage(vehicle: vehicle),
-                      ),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    child: VehicleCard(vehicle: vehicle, disableHero: true),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: VehicleCard(
+                    vehicle: vehicle,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ViewVehiclePage(vehicle: vehicle),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

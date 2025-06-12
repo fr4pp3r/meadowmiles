@@ -187,6 +187,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        forceMaterialTransparency: true,
         title: Text('${widget.vehicle.make} ${widget.vehicle.model}'),
       ),
       body: SingleChildScrollView(

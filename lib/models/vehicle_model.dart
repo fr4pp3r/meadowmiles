@@ -42,8 +42,8 @@ class Vehicle {
           : (map['pricePerDay'] ?? 0.0),
       isAvailable: map['isAvailable'] ?? true,
       vehicleType: VehicleType.values.firstWhere(
-        (e) => e.toString() == 'VehicleType.' + (map['vehicleType'] ?? 'car'),
-        orElse: () => VehicleType.car,
+        (e) => e.toString().split('.').last == (map['vehicleType'] ?? 'other'),
+        orElse: () => VehicleType.other,
       ),
     );
   }

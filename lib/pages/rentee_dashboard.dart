@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/states/appstate.dart';
+import 'package:meadowmiles/pages/rentee/renteebook_tab.dart';
 import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +15,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
   int _selectedIndex = 0;
 
   static const List<Widget> _pages = <Widget>[
-    Center(child: Text('Bookings')),
+    RenteeBookTab(),
     VehicleTab(),
     Center(child: Text('Revenues')),
     Center(child: Text('Reports')),
@@ -44,11 +44,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
             ),
             onPressed: () {
               // Handle profile action
-              authState.signOut(context).then((_) {
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              });
+              authState.signOut(context);
             },
           ),
         ],

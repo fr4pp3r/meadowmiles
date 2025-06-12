@@ -38,7 +38,7 @@ class Booking {
       rentDate: (map['rentDate'] as Timestamp).toDate(),
       returnDate: (map['returnDate'] as Timestamp).toDate(),
       status: BookingStatus.values.firstWhere(
-        (e) => e.toString() == 'BookingStatus.' + (map['status'] ?? 'pending'),
+        (e) => e.toString().split('.').last == (map['status'] ?? 'pending'),
         orElse: () => BookingStatus.pending,
       ),
       ratingRef: map['ratingRef'] ?? '',

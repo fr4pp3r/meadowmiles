@@ -154,8 +154,9 @@ class _AddBookingPageState extends State<AddBookingPage> {
         type: StepperType.vertical,
         currentStep: _currentStep,
         onStepContinue: () {
-          if (_currentStep == 0 && (_rentDate == null || _returnDate == null))
+          if (_currentStep == 0 && (_rentDate == null || _returnDate == null)) {
             return;
+          }
           if (_currentStep < 1) {
             _nextStep();
           } else {
@@ -197,21 +198,70 @@ class _AddBookingPageState extends State<AddBookingPage> {
               children: [
                 ListTile(
                   title: Text(
-                    _rentDate == null
-                        ? 'Select Rent Date'
-                        : 'Rent Date: ${_rentDate!.toLocal().toString().split(' ')[0]}',
+                    _rentDate == null || _returnDate == null
+                        ? 'Select Date Range'
+                        : 'From: ${_rentDate!.toLocal().toString().split(' ')[0]}  To: ${_returnDate!.toLocal().toString().split(' ')[0]}',
                   ),
                   trailing: const Icon(Icons.calendar_today),
-                  onTap: () => _selectDate(context, true),
-                ),
-                ListTile(
-                  title: Text(
-                    _returnDate == null
-                        ? 'Select Return Date'
-                        : 'Return Date: ${_returnDate!.toLocal().toString().split(' ')[0]}',
-                  ),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () => _selectDate(context, false),
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: now,
+                      lastDate: now.add(const Duration(days: 365)),
+                      initialDateRange: _rentDate != null && _returnDate != null
+                          ? DateTimeRange(start: _rentDate!, end: _returnDate!)
+                          : null,
+                    );
+                    if (picked != null) {
+                      // Check for booking overlaps
+                      final bookingsSnapshot = await FirebaseFirestore.instance
+                          .collection('bookings')
+                          .where('vehicleId', isEqualTo: widget.vehicle.id)
+                          .where(
+                            'status',
+                            whereIn: ['pending', 'onProcess', 'active'],
+                          )
+                          .get();
+                      bool hasOverlap = false;
+                      for (final doc in bookingsSnapshot.docs) {
+                        final data = doc.data();
+                        final bookingStart = (data['rentDate'] as Timestamp)
+                            .toDate();
+                        final bookingEnd = (data['returnDate'] as Timestamp)
+                            .toDate();
+                        if (!(picked.end.isBefore(bookingStart) ||
+                            picked.start.isAfter(bookingEnd))) {
+                          hasOverlap = true;
+                          break;
+                        }
+                      }
+                      if (hasOverlap) {
+                        if (mounted) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Date Unavailable'),
+                              content: const Text(
+                                'The selected date range overlaps with an existing booking. Please select a new date or change vehicles.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      } else {
+                        setState(() {
+                          _rentDate = picked.start;
+                          _returnDate = picked.end;
+                        });
+                      }
+                    }
+                  },
                 ),
                 if (_rentDate != null &&
                     _returnDate != null &&
