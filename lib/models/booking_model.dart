@@ -17,6 +17,7 @@ class Booking {
   final double rate; // Rating value (0-5)
   final String feedback; // Feedback text
   final double totalPrice; // Total price for the booking
+  final String paymentproofUrl; // URL for proof of payment image
 
   Booking({
     required this.id,
@@ -32,6 +33,7 @@ class Booking {
     this.rate = 0,
     this.feedback = '',
     this.totalPrice = 0,
+    this.paymentproofUrl = '',
   });
 
   factory Booking.fromMap(Map<String, dynamic> map, {String? id}) {
@@ -56,6 +58,7 @@ class Booking {
       totalPrice: (map['totalPrice'] is int)
           ? (map['totalPrice'] as int).toDouble()
           : (map['totalPrice'] ?? 0).toDouble(),
+      paymentproofUrl: map['paymentproofUrl'] ?? '',
     );
   }
 
@@ -74,6 +77,7 @@ class Booking {
       'rate': rate,
       'feedback': feedback,
       'totalPrice': totalPrice,
+      'proofUrl': paymentproofUrl,
     };
   }
 

@@ -57,6 +57,66 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
     }
   }
 
+  Color _getStatusColor(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.pending:
+        return Colors.orange;
+      case BookingStatus.onProcess:
+        return Colors.blue;
+      case BookingStatus.active:
+        return Colors.green;
+      case BookingStatus.returned:
+        return Colors.purple;
+      case BookingStatus.cancelled:
+        return Colors.red;
+    }
+  }
+
+  IconData _getStatusIcon(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.pending:
+        return Icons.schedule;
+      case BookingStatus.onProcess:
+        return Icons.sync;
+      case BookingStatus.active:
+        return Icons.directions_car;
+      case BookingStatus.returned:
+        return Icons.check_circle_outline;
+      case BookingStatus.cancelled:
+        return Icons.cancel;
+    }
+  }
+
+  String _getStatusTitle(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.pending:
+        return 'Booking Pending';
+      case BookingStatus.onProcess:
+        return 'Processing';
+      case BookingStatus.active:
+        return 'Active Rental';
+      case BookingStatus.returned:
+        return 'Vehicle Returned';
+      case BookingStatus.cancelled:
+        return 'Booking Cancelled';
+    }
+  }
+
+  String _getStatusDescription(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.pending:
+        return 'Waiting for owner approval';
+      case BookingStatus.onProcess:
+        return 'Your booking is being processed';
+      case BookingStatus.active:
+        return 'Enjoy your rental!';
+      case BookingStatus.returned:
+        return 'Vehicle has been returned to owner';
+      case BookingStatus.cancelled:
+        return 'This booking has been cancelled';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final booking = widget.booking;
@@ -329,10 +389,237 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    // Status indicator
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(booking.status).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _getStatusColor(
+                            booking.status,
+                          ).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _getStatusIcon(booking.status),
+                            color: _getStatusColor(booking.status),
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getStatusTitle(booking.status),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _getStatusColor(booking.status),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getStatusDescription(booking.status),
+                                  style: TextStyle(
+                                    color: _getStatusColor(
+                                      booking.status,
+                                    ).withOpacity(0.8),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (booking.status == BookingStatus.returned &&
+                        booking.rate == 0)
+                      ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.rate_review,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Rate Your Experience',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          backgroundColor: Colors.blue,
+                        ),
+                        onPressed: () async {
+                          final result = await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  RateBookingPage(booking: booking),
+                            ),
+                          );
+                          if (result == true && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Thank you for your feedback!'),
+                              ),
+                            );
+                            Navigator.of(context).pop();
+                          }
+                        },
+                      ),
+                    if (booking.status == BookingStatus.returned &&
+                        booking.rate > 0)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 32,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Booking Completed',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Thank you for rating your experience!',
+                              style: TextStyle(color: Colors.green),
+                            ),
+                            if (booking.feedback.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                'Your feedback: "${booking.feedback}"',
+                                style: TextStyle(
+                                  color: Colors.green.shade700,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
             ),
+    );
+  }
+}
+
+// RateBookingPage stub (to be implemented)
+class RateBookingPage extends StatefulWidget {
+  final Booking booking;
+  const RateBookingPage({super.key, required this.booking});
+
+  @override
+  State<RateBookingPage> createState() => _RateBookingPageState();
+}
+
+class _RateBookingPageState extends State<RateBookingPage> {
+  final _formKey = GlobalKey<FormState>();
+  double _rating = 5.0;
+  final _feedbackController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _feedbackController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Rate Your Experience')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Rate your experience:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Slider(
+                value: _rating,
+                min: 1,
+                max: 5,
+                divisions: 4,
+                label: _rating.toStringAsFixed(1),
+                onChanged: _isSubmitting
+                    ? null
+                    : (v) => setState(() => _rating = v),
+              ),
+              Row(
+                children: [
+                  for (int i = 1; i <= 5; i++)
+                    Icon(
+                      i <= _rating ? Icons.star : Icons.star_border,
+                      color: Colors.amber,
+                    ),
+                  const SizedBox(width: 8),
+                  Text(_rating.toStringAsFixed(1)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _feedbackController,
+                decoration: const InputDecoration(
+                  labelText: 'Feedback',
+                  border: OutlineInputBorder(),
+                ),
+                minLines: 2,
+                maxLines: 4,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please provide feedback.'
+                    : null,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  child: _isSubmitting
+                      ? const CircularProgressIndicator()
+                      : const Text('Submit Rating'),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () async {
+                          if (_formKey.currentState?.validate() != true) return;
+                          setState(() => _isSubmitting = true);
+                          await FirebaseFirestore.instance
+                              .collection('bookings')
+                              .doc(widget.booking.id)
+                              .update({
+                                'rate': _rating,
+                                'feedback': _feedbackController.text,
+                              });
+                          if (mounted) Navigator.of(context).pop(true);
+                        },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
