@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
+import 'package:meadowmiles/pages/booking/add_booking.dart';
 
 class ViewVehiclePage extends StatefulWidget {
   final Vehicle vehicle;
@@ -11,146 +13,264 @@ class ViewVehiclePage extends StatefulWidget {
 
 class _ViewVehiclePageState extends State<ViewVehiclePage> {
   bool isAvailable = true;
+  String? _ownerName;
+  bool _isOwnerLoading = false;
 
   @override
   void initState() {
     super.initState();
     isAvailable = widget.vehicle.isAvailable;
+    _fetchOwnerName();
+  }
+
+  Future<void> _fetchOwnerName() async {
+    setState(() => _isOwnerLoading = true);
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.vehicle.ownerId)
+          .get();
+      if (doc.exists) {
+        setState(() {
+          _ownerName = doc.data()?['name'] ?? '';
+          _isOwnerLoading = false;
+        });
+      } else {
+        setState(() {
+          _ownerName = null;
+          _isOwnerLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _ownerName = null;
+        _isOwnerLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        forceMaterialTransparency: true,
-        title: Text('${widget.vehicle.make} ${widget.vehicle.model}'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Hero(
-                tag: 'vehicle-image-${widget.vehicle.id}',
-                child: Container(
-                  width: 200,
+      appBar: AppBar(forceMaterialTransparency: true),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 6,
+                child: SizedBox(
+                  width: double.infinity,
                   height: 200,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: theme.colorScheme.primary,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: widget.vehicle.imageUrl.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: widget.vehicle.imageUrl.isNotEmpty
+                        ? Image.network(
                             widget.vehicle.imageUrl,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
                                   color: Colors.grey.shade300,
                                   child: const Icon(Icons.car_repair, size: 60),
                                 ),
+                          )
+                        : Container(
+                            color: Colors.grey.shade300,
+                            child: const Icon(Icons.car_repair, size: 60),
                           ),
-                        )
-                      : Container(
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.car_repair, size: 60),
-                        ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                5,
-                (index) => Icon(
-                  index < 3 ? Icons.star : Icons.star_border,
-                  color: Colors.amber,
-                  size: 32,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const SizedBox(height: 24),
-            _ReadOnlyField(label: 'Make', value: ': ${widget.vehicle.make}'),
-            _ReadOnlyField(label: 'Model', value: ': ${widget.vehicle.model}'),
-            _ReadOnlyField(
-              label: 'Plate Number',
-              value: ': ${widget.vehicle.plateNumber}',
-            ),
-            _ReadOnlyField(label: 'Color', value: ': ${widget.vehicle.color}'),
-            _ReadOnlyField(
-              label: 'Year',
-              value: ': ${widget.vehicle.year.toString()}',
-            ),
-            _ReadOnlyField(
-              label: 'Price per day',
-              value: ': ₱${widget.vehicle.pricePerDay.toStringAsFixed(2)}',
-            ),
-            _ReadOnlyField(
-              label: 'Type',
-              value:
-                  ': ${widget.vehicle.vehicleType.toString().split('.').last}',
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Text(
-                  widget.vehicle.isAvailable ? 'Available' : 'Not Available',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: widget.vehicle.isAvailable
-                        ? const Color.fromARGB(255, 57, 126, 58)
-                        : const Color.fromARGB(255, 155, 28, 19),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () {
-                setState(() {});
-                // Here you would typically update the vehicle's availability in the database
-              },
-              child: Text('Rent this vehicle!'),
-            ),
-          ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                // Add elevation using Material widget
+                child: Material(
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              widget.vehicle.make,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  '₱ ${widget.vehicle.pricePerDay}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              widget.vehicle.model,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            Text(
+                              'per day',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              // widget.vehicle.location,
+                              'Location: ${widget.vehicle.location}',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Divider(),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.grey.shade300,
+                              child: const Icon(
+                                Icons.person,
+                                size: 30,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _isOwnerLoading
+                                  ? SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      _ownerName ?? 'Unknown',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                    ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.call,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  // Implement call functionality here
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Car Description',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.vehicle.description.isNotEmpty
+                              ? widget.vehicle.description
+                              : 'No description provided.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: isAvailable
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddBookingPage(
+                                          vehicle: widget.vehicle,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              isAvailable ? 'Rent Now' : 'Not Available',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-}
-
-class _ReadOnlyField extends StatelessWidget {
-  final String label;
-  final String value;
-  const _ReadOnlyField({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        ],
       ),
     );
   }

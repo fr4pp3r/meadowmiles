@@ -129,21 +129,21 @@ class _VehicleTabState extends State<VehicleTab> {
                         itemCount: filteredVehicles.length,
                         itemBuilder: (context, index) {
                           final vehicle = filteredVehicles[index];
-                          return GestureDetector(
+                          return VehicleCard(
+                            vehicle: vehicle,
                             onTap: () async {
-                              await Navigator.push(
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       EditVehiclePage(vehicle: vehicle),
                                 ),
                               );
-                              setState(() {
-                                _isLoading = true;
-                              });
-                              await _fetchVehicles();
+                              if (result != null) {
+                                // Vehicle was edited, reload the list
+                                await _fetchVehicles();
+                              }
                             },
-                            child: VehicleCard(vehicle: vehicle),
                           );
                         },
                       ),

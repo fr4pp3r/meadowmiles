@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/states/appstate.dart';
 import 'package:meadowmiles/models/user_model.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
@@ -84,14 +83,26 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget logoPlaceholder() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double size = constraints.maxWidth * 0.5;
-        return SizedBox(
-          width: size,
-          height: size,
-          child: Image.asset(
-            'assets/logos/meadowmiles_logo2.png',
-            fit: BoxFit.contain,
-          ), // Placeholder for logo
+        return Container(
+          width: double.infinity,
+          height: 220,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(30),
+              bottomRight: Radius.circular(30),
+            ),
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 32.0),
+              child: Image.asset(
+                'assets/logos/meadowmiles_logo2.png',
+                height: 150,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
         );
       },
     );
@@ -125,266 +136,259 @@ class _RegisterPageState extends State<RegisterPage> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true, // Ensures keyboard does not block content
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16.0),
-            logoPlaceholder(),
-            Text(
-              'Registration',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Need help? Check out our ',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {},
-                  child: Text(
-                    'Help Center',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: Stepper(
-                  type: StepperType.vertical,
-                  currentStep: _currentStep,
-                  onStepContinue: _nextStep,
-                  onStepCancel: _prevStep,
-                  controlsBuilder: (context, details) {
-                    return Row(
-                      children: [
-                        if (_currentStep < 3)
-                          ElevatedButton(
-                            onPressed: details.onStepContinue,
-                            child: const Text('Next'),
-                          ),
-                        if (_currentStep > 0)
-                          TextButton(
-                            onPressed: details.onStepCancel,
-                            child: const Text('Back'),
-                          ),
-                        if (_currentStep == 3)
-                          ElevatedButton(
-                            onPressed: () async {
-                              _createUserModel();
-                              await authState.register(
-                                _createdUserModel!,
-                                _passwordController.text,
-                                context,
-                              );
-                              // To reset all fields, call _resetForm();
-                              _resetForm();
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: const Text('Register'),
-                          ),
-                      ],
-                    );
-                  },
-                  steps: [
-                    Step(
-                      title: const Text('Select Role'),
-                      isActive: _currentStep >= 0,
-                      state: _currentStep > 0
-                          ? StepState.complete
-                          : StepState.indexed,
-                      content: DropdownButtonFormField<String>(
-                        value: _selectedRole,
-                        items: [
-                          DropdownMenuItem(
-                            value: 'renter',
-                            child: Text(
-                              'Renter (Customer)',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'rentee',
-                            child: Text(
-                              'Rentee (Owner of car)',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) =>
-                            setState(() => _selectedRole = value),
-                        decoration: const InputDecoration(labelText: 'Role'),
-                      ),
-                    ),
-                    Step(
-                      title: const Text('Account Credentials'),
-                      isActive: _currentStep >= 1,
-                      state: _currentStep > 1
-                          ? StepState.complete
-                          : StepState.indexed,
-                      content: Column(
-                        children: [
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: !_passwordVisible,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _passwordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                ),
-                                onPressed: () => setState(
-                                  () => _passwordVisible = !_passwordVisible,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _confirmPasswordController,
-                            obscureText: !_confirmPasswordVisible,
-                            decoration: InputDecoration(
-                              labelText: 'Confirm Password',
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _confirmPasswordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                ),
-                                onPressed: () => setState(
-                                  () => _confirmPasswordVisible =
-                                      !_confirmPasswordVisible,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (_passwordController.text !=
-                                  _confirmPasswordController.text &&
-                              _confirmPasswordController.text.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                'Passwords do not match',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Step(
-                      title: const Text('Personal Info'),
-                      isActive: _currentStep >= 2,
-                      state: _currentStep > 2
-                          ? StepState.complete
-                          : StepState.indexed,
-                      content: Column(
-                        children: [
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Name',
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              CountryCodePicker(
-                                initialSelection: 'PH',
-                                onChanged: (country) {
-                                  setState(() {
-                                    _selectedCountryCode = country.dialCode!;
-                                  });
-                                },
-                                showFlag: false,
-                                showFlagDialog: true,
-                                showDropDownButton: true,
-                                padding: const EdgeInsets.only(right: 8.0),
-                              ),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _mobileController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Mobile Number',
-                                  ),
-                                  keyboardType: TextInputType.phone,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Step(
-                      title: const Text('Terms and Conditions'),
-                      isActive: _currentStep >= 3,
-                      state: _termsAccepted
-                          ? StepState.complete
-                          : StepState.indexed,
-                      content: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'By registering, you agree to MeadowMiles\' Terms and Conditions. Please read them carefully before proceeding.\n\n1. You agree to provide accurate information.\n2. You are responsible for your account security.\n3. MeadowMiles is not liable for any damages or losses.\n4. For full terms, visit our website.',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: _termsAccepted,
-                                onChanged: (val) {
-                                  setState(() {
-                                    _termsAccepted = val ?? false;
-                                  });
-                                },
-                              ),
-                              Expanded(
-                                child: Text(
-                                  'I agree to the Terms and Conditions',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (!_termsAccepted && _currentStep == 3)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                'You must agree to the Terms and Conditions to register.',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+      body: Column(
+        children: [
+          logoPlaceholder(),
+          Text(
+            'Registration',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Need help? Check out our ',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
+              GestureDetector(
+                onTap: () {},
+                child: Text(
+                  'Help Center',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16.0),
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: Stepper(
+                type: StepperType.vertical,
+                currentStep: _currentStep,
+                onStepContinue: _nextStep,
+                onStepCancel: _prevStep,
+                controlsBuilder: (context, details) {
+                  return Row(
+                    children: [
+                      if (_currentStep < 3)
+                        ElevatedButton(
+                          onPressed: details.onStepContinue,
+                          child: const Text('Next'),
+                        ),
+                      if (_currentStep > 0)
+                        TextButton(
+                          onPressed: details.onStepCancel,
+                          child: const Text('Back'),
+                        ),
+                      if (_currentStep == 3)
+                        ElevatedButton(
+                          onPressed: () async {
+                            _createUserModel();
+                            await authState.register(
+                              _createdUserModel!,
+                              _passwordController.text,
+                              context,
+                            );
+                            // To reset all fields, call _resetForm();
+                            _resetForm();
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: const Text('Register'),
+                        ),
+                    ],
+                  );
+                },
+                steps: [
+                  Step(
+                    title: const Text('Select Role'),
+                    isActive: _currentStep >= 0,
+                    state: _currentStep > 0
+                        ? StepState.complete
+                        : StepState.indexed,
+                    content: DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      items: [
+                        DropdownMenuItem(
+                          value: 'renter',
+                          child: Text(
+                            'Renter (Customer)',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'rentee',
+                          child: Text(
+                            'Rentee (Owner of car)',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _selectedRole = value),
+                      decoration: const InputDecoration(labelText: 'Role'),
+                    ),
+                  ),
+                  Step(
+                    title: const Text('Account Credentials'),
+                    isActive: _currentStep >= 1,
+                    state: _currentStep > 1
+                        ? StepState.complete
+                        : StepState.indexed,
+                    content: Column(
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(labelText: 'Email'),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: !_passwordVisible,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _passwordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () => setState(
+                                () => _passwordVisible = !_passwordVisible,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _confirmPasswordController,
+                          obscureText: !_confirmPasswordVisible,
+                          decoration: InputDecoration(
+                            labelText: 'Confirm Password',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _confirmPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () => setState(
+                                () => _confirmPasswordVisible =
+                                    !_confirmPasswordVisible,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (_passwordController.text !=
+                                _confirmPasswordController.text &&
+                            _confirmPasswordController.text.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              'Passwords do not match',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Step(
+                    title: const Text('Personal Info'),
+                    isActive: _currentStep >= 2,
+                    state: _currentStep > 2
+                        ? StepState.complete
+                        : StepState.indexed,
+                    content: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(labelText: 'Name'),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            CountryCodePicker(
+                              initialSelection: 'PH',
+                              onChanged: (country) {
+                                setState(() {
+                                  _selectedCountryCode = country.dialCode!;
+                                });
+                              },
+                              showFlag: false,
+                              showFlagDialog: true,
+                              showDropDownButton: true,
+                              padding: const EdgeInsets.only(right: 8.0),
+                            ),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _mobileController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Mobile Number',
+                                ),
+                                keyboardType: TextInputType.phone,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Step(
+                    title: const Text('Terms and Conditions'),
+                    isActive: _currentStep >= 3,
+                    state: _termsAccepted
+                        ? StepState.complete
+                        : StepState.indexed,
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'By registering, you agree to MeadowMiles\' Terms and Conditions. Please read them carefully before proceeding.\n\n1. You agree to provide accurate information.\n2. You are responsible for your account security.\n3. MeadowMiles is not liable for any damages or losses.\n4. For full terms, visit our website.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _termsAccepted,
+                              onChanged: (val) {
+                                setState(() {
+                                  _termsAccepted = val ?? false;
+                                });
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                'I agree to the Terms and Conditions',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!_termsAccepted && _currentStep == 3)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              'You must agree to the Terms and Conditions to register.',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

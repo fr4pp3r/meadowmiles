@@ -74,7 +74,14 @@ class AuthState extends ChangeNotifier {
     );
     await _auth.signOut();
     if (context.mounted) {
-      Navigator.of(context).pop();
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pop(); // Dismiss loading dialog
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil('/start', (route) => false);
     }
     notifyListeners();
   }

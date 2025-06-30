@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/components/vehicle_cards.dart';
+import 'package:meadowmiles/components/vehicle_card2.dart';
 import 'package:meadowmiles/models/vehicle_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meadowmiles/pages/renter/home/home_browse.dart';
@@ -17,23 +17,30 @@ class _HomeTabState extends State<HomeTab> {
   final TextEditingController _makeController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
   final TextEditingController _colorController = TextEditingController();
+  DateTimeRange? _selectedDateRange;
   final _formKey = GlobalKey<FormState>();
   List<Vehicle> _vehicles = [];
+  List<Vehicle> _popularVehicles = [];
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadVehicles();
+    _fetchTopRatedVehicles(5).then((list) {
+      if (mounted) setState(() => _popularVehicles = list);
+    });
   }
 
   Future<void> _loadVehicles() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final query = await FirebaseFirestore.instance
           .collection('vehicles')
           .where('isAvailable', isEqualTo: true)
           .get();
+      if (!mounted) return;
       setState(() {
         _vehicles = query.docs
             .map((doc) => Vehicle.fromMap(doc.data(), id: doc.id))
@@ -41,9 +48,49 @@ class _HomeTabState extends State<HomeTab> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
       // Optionally show error
     }
+  }
+
+  Future<List<Vehicle>> _fetchTopRatedVehicles(int count) async {
+    final vehiclesSnapshot = await FirebaseFirestore.instance
+        .collection('vehicles')
+        .where('isAvailable', isEqualTo: true)
+        .get();
+    final vehicles = vehiclesSnapshot.docs
+        .map((doc) => Vehicle.fromMap(doc.data(), id: doc.id))
+        .toList();
+    // For each vehicle, fetch its average rating
+    final List<Map<String, dynamic>> vehicleRatings = [];
+    for (final vehicle in vehicles) {
+      final bookingsSnapshot = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('vehicleId', isEqualTo: vehicle.id)
+          .get();
+      double total = 0;
+      int countRatings = 0;
+      for (final doc in bookingsSnapshot.docs) {
+        final data = doc.data();
+        final rate = (data['rate'] is int)
+            ? (data['rate'] as int).toDouble()
+            : (data['rate'] ?? 0).toDouble();
+        if (rate > 0) {
+          total += rate;
+          countRatings++;
+        }
+      }
+      final avg = countRatings == 0 ? 0.0 : total / countRatings;
+      vehicleRatings.add({'vehicle': vehicle, 'avg': avg});
+    }
+    vehicleRatings.sort(
+      (a, b) => (b['avg'] as double).compareTo(a['avg'] as double),
+    );
+    return vehicleRatings
+        .take(count)
+        .map((e) => e['vehicle'] as Vehicle)
+        .toList();
   }
 
   @override
@@ -179,6 +226,51 @@ class _HomeTabState extends State<HomeTab> {
                               return null;
                             },
                           ),
+                          const SizedBox(height: 16.0),
+                          GestureDetector(
+                            onTap: () async {
+                              final now = DateTime.now();
+                              final picked = await showDateRangePicker(
+                                context: context,
+                                firstDate: now,
+                                lastDate: now.add(const Duration(days: 365)),
+                                initialDateRange: _selectedDateRange,
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _selectedDateRange = picked;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _selectedDateRange == null
+                                        ? 'Select Date Range'
+                                        : '${_selectedDateRange!.start.month}/${_selectedDateRange!.start.day}/${_selectedDateRange!.start.year} - '
+                                              '${_selectedDateRange!.end.month}/${_selectedDateRange!.end.day}/${_selectedDateRange!.end.year}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  const Icon(Icons.calendar_today, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24.0),
                           SizedBox(
                             width: 150,
@@ -189,8 +281,9 @@ class _HomeTabState extends State<HomeTab> {
                                 ).colorScheme.primary,
                               ),
                               onPressed: () {
-                                if (_formKey.currentState?.validate() ??
-                                    false) {
+                                if ((_formKey.currentState?.validate() ??
+                                        false) &&
+                                    _selectedDateRange != null) {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => HomeBrowsePage(
@@ -198,6 +291,16 @@ class _HomeTabState extends State<HomeTab> {
                                         make: _makeController.text.trim(),
                                         model: _modelController.text.trim(),
                                         color: _colorController.text.trim(),
+                                        startDate: _selectedDateRange!.start,
+                                        endDate: _selectedDateRange!.end,
+                                      ),
+                                    ),
+                                  );
+                                } else if (_selectedDateRange == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Please select a date range.',
                                       ),
                                     ),
                                   );
@@ -256,9 +359,9 @@ class _HomeTabState extends State<HomeTab> {
                       child: Center(child: CircularProgressIndicator()),
                     )
                   : Row(
-                      children: _vehicles.isEmpty
+                      children: _popularVehicles.isEmpty
                           ? [Text('No vehicles found.')]
-                          : _vehicles
+                          : _popularVehicles
                                 .map(
                                   (vehicle) => GestureDetector(
                                     onTap: () {
@@ -269,13 +372,18 @@ class _HomeTabState extends State<HomeTab> {
                                         ),
                                       );
                                     },
-                                    child: SizedBox(
-                                      width: 400,
-                                      height: 250,
-                                      child: VehicleCard(
-                                        vehicle: vehicle,
-                                        disableHero: true,
-                                      ),
+                                    child: VehicleCard2(
+                                      vehicle: vehicle,
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ViewVehiclePage(
+                                                  vehicle: vehicle,
+                                                ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                 )

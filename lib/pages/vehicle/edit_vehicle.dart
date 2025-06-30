@@ -23,6 +23,8 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
   late TextEditingController colorController;
   late TextEditingController yearController;
   late TextEditingController priceController;
+  late TextEditingController locationController;
+  late TextEditingController descriptionController;
   bool isAvailable = true;
   bool isLoading = false;
 
@@ -39,6 +41,10 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     priceController = TextEditingController(
       text: widget.vehicle.pricePerDay.toStringAsFixed(2),
     );
+    locationController = TextEditingController(text: widget.vehicle.location);
+    descriptionController = TextEditingController(
+      text: widget.vehicle.description,
+    );
     isAvailable = widget.vehicle.isAvailable;
   }
 
@@ -50,6 +56,8 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     colorController.dispose();
     yearController.dispose();
     priceController.dispose();
+    locationController.dispose();
+    descriptionController.dispose();
     super.dispose();
   }
 
@@ -107,6 +115,8 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
             'pricePerDay': double.tryParse(priceController.text.trim()) ?? 0.0,
             'isAvailable': isAvailable,
             'imageUrl': newImageUrl,
+            'location': locationController.text.trim(),
+            'description': descriptionController.text.trim(),
           });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -123,7 +133,30 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     setState(() => isLoading = false);
   }
 
+  Future<bool> _hasActiveBookings() async {
+    final bookings = await FirebaseFirestore.instance
+        .collection('bookings')
+        .where('vehicleId', isEqualTo: widget.vehicle.id)
+        .where('status', isNotEqualTo: 'cancelled')
+        .get();
+    return bookings.docs.isNotEmpty;
+  }
+
   Future<void> _removeVehicle() async {
+    setState(() => isLoading = true);
+    final hasActive = await _hasActiveBookings();
+    if (hasActive) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot remove vehicle with active bookings.'),
+          ),
+        );
+      }
+      return;
+    }
+    // Confirm removal
     final confirm = await showDialog<bool>(
       barrierDismissible: false,
       context: context,
@@ -144,8 +177,11 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
         ],
       ),
     );
-    if (confirm != true) return;
-    setState(() => isLoading = true);
+    if (confirm != true) {
+      setState(() => isLoading = false);
+      return;
+    }
+    // Remove vehicle
     try {
       // Delete image from Supabase if it exists
       final imageUrl = widget.vehicle.imageUrl;
@@ -154,14 +190,12 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
             'supabase.co/storage/v1/object/public/vehicle-img/',
           )) {
         final oldPath = _extractSupabasePathFromUrl(imageUrl);
-        debugPrint('Supabase delete path: $oldPath');
         if (oldPath != null && oldPath.isNotEmpty) {
           await Supabase.instance.client.storage.from('vehicle-img').remove([
             oldPath,
           ]);
         }
       }
-      // Delete vehicle from Firestore
       await FirebaseFirestore.instance
           .collection('vehicles')
           .doc(widget.vehicle.id)
@@ -170,7 +204,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Vehicle removed successfully!')),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -187,45 +221,42 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.vehicle.make} ${widget.vehicle.model}'),
+        forceMaterialTransparency: true,
+        title: Text('Edit Vehicle'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Hero(
-                tag: 'vehicle-image-${widget.vehicle.id}',
-                child: Container(
-                  width: 200,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 6,
+                child: SizedBox(
+                  width: double.infinity,
                   height: 200,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: theme.colorScheme.primary,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: _currentImage != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.file(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _currentImage != null
+                        ? Image.file(
                             File(_currentImage!.path),
-                            fit: BoxFit.cover,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
                                   color: Colors.grey.shade300,
                                   child: const Icon(Icons.car_repair, size: 60),
                                 ),
-                          ),
-                        )
-                      : (widget.vehicle.imageUrl.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.network(
+                          )
+                        : (widget.vehicle.imageUrl.isNotEmpty
+                              ? Image.network(
                                   widget.vehicle.imageUrl,
-                                  fit: BoxFit.cover,
+                                  fit: BoxFit.contain,
+                                  width: double.infinity,
+                                  height: double.infinity,
                                   errorBuilder: (context, error, stackTrace) =>
                                       Container(
                                         color: Colors.grey.shade300,
@@ -234,159 +265,313 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                                           size: 60,
                                         ),
                                       ),
+                                )
+                              : Container(
+                                  color: Colors.grey.shade300,
+                                  child: const Icon(Icons.car_repair, size: 60),
+                                )),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 160,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(360),
+                      ),
+                    ),
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            final picker = ImagePicker();
+                            final picked = await picker.pickImage(
+                              source: ImageSource.gallery,
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _currentImage = picked;
+                              });
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Image selected!'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    child: Text(
+                      'Change Image',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(16),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: makeController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Make/Brand',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.directions_car),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: modelController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Model',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.drive_eta),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: plateController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Plate Number',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.confirmation_number),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          textCapitalization: TextCapitalization.characters,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: yearController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Year',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.calendar_today),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: colorController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Color',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.color_lens),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: priceController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Price per day',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.attach_money),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: locationController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Location',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.location_on_outlined),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: descriptionController,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          decoration: InputDecoration(
+                            labelText: 'Description',
+                            labelStyle: Theme.of(context).textTheme.bodySmall,
+                            prefixIcon: const Icon(Icons.description),
+                            filled: true,
+                            fillColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          maxLines: 3,
+                          validator: (v) =>
+                              v == null || v.isEmpty ? 'Required' : null,
+                          textCapitalization: TextCapitalization.sentences,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Text(
+                              isAvailable ? 'Available' : 'Not Available',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: isAvailable
+                                    ? const Color.fromARGB(255, 57, 126, 58)
+                                    : const Color.fromARGB(255, 155, 28, 19),
+                              ),
+                            ),
+                            Switch(
+                              value: isAvailable,
+                              onChanged: (val) =>
+                                  setState(() => isAvailable = val),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Align(
+                          alignment: Alignment.center,
+                          child: SizedBox(
+                            width: 160,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(360),
                                 ),
-                              )
-                            : Container(
-                                color: Colors.grey.shade300,
-                                child: const Icon(Icons.car_repair, size: 60),
-                              )),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 160,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(360),
-                    ),
-                  ),
-                  onPressed: () async {
-                    final picker = ImagePicker();
-                    final picked = await picker.pickImage(
-                      source: ImageSource.gallery,
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _currentImage = picked;
-                      });
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Image selected!')),
-                        );
-                      }
-                    }
-                  },
-                  child: Text(
-                    'Change Image',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextFormField(
-              controller: makeController,
-              decoration: const InputDecoration(labelText: 'Make'),
-              textCapitalization: TextCapitalization.words,
-            ),
-            TextFormField(
-              controller: modelController,
-              decoration: const InputDecoration(labelText: 'Model'),
-              textCapitalization: TextCapitalization.words,
-            ),
-            TextFormField(
-              controller: plateController,
-              decoration: const InputDecoration(labelText: 'Plate Number'),
-              textCapitalization: TextCapitalization.characters,
-            ),
-            TextFormField(
-              controller: colorController,
-              decoration: const InputDecoration(labelText: 'Color'),
-              textCapitalization: TextCapitalization.words,
-            ),
-            TextFormField(
-              controller: yearController,
-              decoration: const InputDecoration(labelText: 'Year'),
-              keyboardType: TextInputType.number,
-            ),
-            TextFormField(
-              controller: priceController,
-              decoration: const InputDecoration(labelText: 'Price per day'),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Text(
-                  isAvailable ? 'Available' : 'Not Available',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: isAvailable
-                        ? const Color.fromARGB(255, 57, 126, 58)
-                        : const Color.fromARGB(255, 155, 28, 19),
-                  ),
-                ),
-                Switch(
-                  value: isAvailable,
-                  onChanged: (val) => setState(() => isAvailable = val),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 160,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(360),
-                    ),
-                  ),
-                  onPressed: isLoading ? null : _updateVehicle,
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          'Save Changes',
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary,
                               ),
+                              onPressed: isLoading
+                                  ? null
+                                  : () async {
+                                      await _updateVehicle();
+                                      if (mounted)
+                                        Navigator.of(context).pop(true);
+                                    },
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Save Changes',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimary,
+                                          ),
+                                    ),
+                            ),
+                          ),
                         ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 200,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(360),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.center,
+                          child: SizedBox(
+                            width: 200,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(360),
+                                ),
+                              ),
+                              onPressed: isLoading ? null : _removeVehicle,
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Remove Vehicle',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimary,
+                                          ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  onPressed: isLoading ? null : _removeVehicle,
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          'Remove Vehicle',
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
-                        ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

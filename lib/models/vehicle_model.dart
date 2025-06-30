@@ -12,6 +12,8 @@ class Vehicle {
   final double pricePerDay;
   final bool isAvailable;
   final VehicleType vehicleType;
+  final String location;
+  final String description;
 
   Vehicle({
     required this.id,
@@ -25,6 +27,8 @@ class Vehicle {
     required this.pricePerDay,
     required this.isAvailable,
     required this.vehicleType,
+    this.location = '',
+    this.description = '',
   });
 
   factory Vehicle.fromMap(Map<String, dynamic> map, {String? id}) {
@@ -42,9 +46,11 @@ class Vehicle {
           : (map['pricePerDay'] ?? 0.0),
       isAvailable: map['isAvailable'] ?? true,
       vehicleType: VehicleType.values.firstWhere(
-        (e) => e.toString() == 'VehicleType.' + (map['vehicleType'] ?? 'car'),
-        orElse: () => VehicleType.car,
+        (e) => e.toString().split('.').last == (map['vehicleType'] ?? 'other'),
+        orElse: () => VehicleType.other,
       ),
+      location: map['location'] ?? '',
+      description: map['description'] ?? '',
     );
   }
 
@@ -61,6 +67,8 @@ class Vehicle {
       'pricePerDay': pricePerDay,
       'isAvailable': isAvailable,
       'vehicleType': vehicleType.toString().split('.').last,
+      'location': location,
+      'description': description,
     };
   }
 
