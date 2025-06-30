@@ -4,10 +4,10 @@ import 'package:meadowmiles/models/booking_model.dart';
 import 'package:provider/provider.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/components/booking_card.dart';
-import 'package:meadowmiles/pages/booking/renteeview_booking.dart';
+import 'package:meadowmiles/pages/booking/renterview_booking.dart';
 
-class RenteeBookTab extends StatelessWidget {
-  const RenteeBookTab({super.key});
+class RenterHistoryTab extends StatelessWidget {
+  const RenterHistoryTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class RenteeBookTab extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('bookings')
-          .where('ownerId', isEqualTo: userId)
+          .where('renterId', isEqualTo: userId)
           .orderBy('rentDate', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
@@ -40,7 +40,7 @@ class RenteeBookTab extends StatelessWidget {
                 id: doc.id,
               ),
             )
-            .where((booking) => booking.status != BookingStatus.returned)
+            .where((booking) => booking.status == BookingStatus.returned)
             .toList();
         return ListView.builder(
           itemCount: bookings.length,
@@ -80,11 +80,11 @@ class RenteeBookTab extends StatelessWidget {
                       }
                     }
                   : null,
-              onView: () async {
-                await Navigator.of(context).push(
+              onView: () {
+                Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) =>
-                        RenteeViewBookingPage(booking: booking),
+                        RenterViewBookingPage(booking: booking),
                   ),
                 );
               },

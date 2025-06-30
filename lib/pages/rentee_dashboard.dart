@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/rentee/renteebook_tab.dart';
+import 'package:meadowmiles/pages/rentee/renteehistory_tab.dart';
 import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
 
   static const List<Widget> _pages = <Widget>[
     RenteeBookTab(),
+    RenteeHistoryTab(),
     VehicleTab(),
     Center(child: Text('Revenues')),
     Center(child: Text('Reports')),
@@ -78,6 +80,10 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.book_online),
               label: 'Bookings',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              label: 'History',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.directions_car),

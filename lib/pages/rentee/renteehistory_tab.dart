@@ -6,8 +6,8 @@ import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/components/booking_card.dart';
 import 'package:meadowmiles/pages/booking/renteeview_booking.dart';
 
-class RenteeBookTab extends StatelessWidget {
-  const RenteeBookTab({super.key});
+class RenteeHistoryTab extends StatelessWidget {
+  const RenteeHistoryTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class RenteeBookTab extends StatelessWidget {
                 id: doc.id,
               ),
             )
-            .where((booking) => booking.status != BookingStatus.returned)
+            .where((booking) => booking.status == BookingStatus.returned)
             .toList();
         return ListView.builder(
           itemCount: bookings.length,

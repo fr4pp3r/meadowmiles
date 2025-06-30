@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/renter/home/home_tab.dart';
 import 'package:meadowmiles/pages/renter/renterbook_tab.dart';
+import 'package:meadowmiles/pages/renter/renterhistory_tab.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
@@ -17,8 +18,7 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
   static final List<Widget> _pages = <Widget>[
     HomeTab(),
     RenterBookTab(),
-    // TODO: Replace with actual Rented Vehicles page
-    Center(child: Text('Rented Vehicles - Return & Pay')),
+    RenterHistoryTab(),
   ];
 
   void _onItemTapped(int index) {
@@ -81,8 +81,8 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
               label: 'Bookings',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.directions_car),
-              label: 'Rented',
+              icon: Icon(Icons.history),
+              label: 'History',
             ),
           ],
         ),

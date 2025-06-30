@@ -40,6 +40,7 @@ class RenterBookTab extends StatelessWidget {
                 id: doc.id,
               ),
             )
+            .where((booking) => booking.status != BookingStatus.returned)
             .toList();
         return ListView.builder(
           itemCount: bookings.length,
