@@ -19,7 +19,7 @@ class _HomeTabState extends State<HomeTab> {
   final TextEditingController _colorController = TextEditingController();
   DateTimeRange? _selectedDateRange;
   final _formKey = GlobalKey<FormState>();
-  List<Vehicle> _vehicles = [];
+  // List<Vehicle> _vehicles = [];
   List<Vehicle> _popularVehicles = [];
   bool _isLoading = false;
 
@@ -36,15 +36,15 @@ class _HomeTabState extends State<HomeTab> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('vehicles')
-          .where('isAvailable', isEqualTo: true)
-          .get();
+      // final query = await FirebaseFirestore.instance
+      //     .collection('vehicles')
+      //     .where('isAvailable', isEqualTo: true)
+      //     .get();
       if (!mounted) return;
       setState(() {
-        _vehicles = query.docs
-            .map((doc) => Vehicle.fromMap(doc.data(), id: doc.id))
-            .toList();
+        // _vehicles = query.docs
+        //     .map((doc) => Vehicle.fromMap(doc.data(), id: doc.id))
+        //     .toList();
         _isLoading = false;
       });
     } catch (e) {

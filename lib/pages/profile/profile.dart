@@ -154,8 +154,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+                      Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha((0.1 * 255).toInt()),
+                      Theme.of(
+                        context,
+                      ).colorScheme.secondary.withAlpha((0.05 * 255).toInt()),
                     ],
                   ),
                 ),
@@ -177,9 +181,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.primary
+                                .withAlpha((0.3 * 255).toInt()),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -209,50 +212,50 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 8),
 
                     // User Type Badge
-                    // Container(
-                    //   padding: const EdgeInsets.symmetric(
-                    //     horizontal: 16,
-                    //     vertical: 8,
-                    //   ),
-                    //   decoration: BoxDecoration(
-                    //     color: _userModel!.userType == UserModelType.renter
-                    //         ? Colors.blue.shade100
-                    //         : Colors.green.shade100,
-                    //     borderRadius: BorderRadius.circular(20),
-                    //     border: Border.all(
-                    //       color: _userModel!.userType == UserModelType.renter
-                    //           ? Colors.blue
-                    //           : Colors.green,
-                    //     ),
-                    //   ),
-                    //   child: Row(
-                    //     mainAxisSize: MainAxisSize.min,
-                    //     children: [
-                    //       Icon(
-                    //         _userModel!.userType == UserModelType.renter
-                    //             ? Icons.person
-                    //             : Icons.business,
-                    //         size: 16,
-                    //         color: _userModel!.userType == UserModelType.renter
-                    //             ? Colors.blue
-                    //             : Colors.green,
-                    //       ),
-                    //       const SizedBox(width: 4),
-                    //       Text(
-                    //         _userModel!.userType == UserModelType.renter
-                    //             ? 'Renter'
-                    //             : 'Owner',
-                    //         style: TextStyle(
-                    //           fontWeight: FontWeight.bold,
-                    //           color:
-                    //               _userModel!.userType == UserModelType.renter
-                    //               ? Colors.blue
-                    //               : Colors.green,
-                    //         ),
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _userModel!.userType == UserModelType.renter
+                            ? Colors.blue.shade100
+                            : Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _userModel!.userType == UserModelType.renter
+                              ? Colors.blue
+                              : Colors.green,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _userModel!.userType == UserModelType.renter
+                                ? Icons.person
+                                : Icons.business,
+                            size: 16,
+                            color: _userModel!.userType == UserModelType.renter
+                                ? Colors.blue
+                                : Colors.green,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _userModel!.userType == UserModelType.renter
+                                ? 'Renter'
+                                : 'Owner',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  _userModel!.userType == UserModelType.renter
+                                  ? Colors.blue
+                                  : Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -425,7 +428,7 @@ class _ProfilePageState extends State<ProfilePage> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withAlpha((0.1 * 255).toInt()),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 20),

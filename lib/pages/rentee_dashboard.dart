@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/rentee/renteebook_tab.dart';
 import 'package:meadowmiles/pages/rentee/renteehistory_tab.dart';
 import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
-import 'package:meadowmiles/states/authstate.dart';
-import 'package:provider/provider.dart';
 
 class RenteeDashboardPage extends StatefulWidget {
   const RenteeDashboardPage({super.key});
@@ -31,10 +29,11 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    var authState = context.watch<AuthState>();
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
 
-    return WillPopScope(
-      onWillPop: () async {
         final shouldExit = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -52,7 +51,10 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
             ],
           ),
         );
-        return shouldExit ?? false;
+
+        if (shouldExit == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -67,7 +69,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
               ),
               onPressed: () {
                 // Handle profile action
-                authState.signOut(context);
+                Navigator.pushNamed(context, '/profile');
               },
             ),
           ],

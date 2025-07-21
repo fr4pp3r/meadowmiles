@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/renter/home/home_tab.dart';
 import 'package:meadowmiles/pages/renter/renterbook_tab.dart';
 import 'package:meadowmiles/pages/renter/renterhistory_tab.dart';
-import 'package:meadowmiles/states/authstate.dart';
-import 'package:provider/provider.dart';
+// import 'package:meadowmiles/states/authstate.dart';
+// import 'package:provider/provider.dart';
 
 class RenterDashboardPage extends StatefulWidget {
   const RenterDashboardPage({super.key});
@@ -29,10 +29,13 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    var authState = context.watch<AuthState>();
+    // var authState = context.watch<AuthState>();
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
         final shouldExit = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -50,7 +53,10 @@ class _RenterDashboardPageState extends State<RenterDashboardPage> {
             ],
           ),
         );
-        return shouldExit ?? false;
+
+        if (shouldExit == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
       },
       child: Scaffold(
         appBar: AppBar(

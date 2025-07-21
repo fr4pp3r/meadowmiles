@@ -294,15 +294,17 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                       if (await canLaunchUrl(uri)) {
                                         await launchUrl(uri);
                                       } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Could not launch dialer.',
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Could not launch dialer.',
+                                              ),
                                             ),
-                                          ),
-                                        );
+                                          );
+                                        }
                                       }
                                     },
                                   ),
@@ -347,7 +349,9 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '${booking.rentDate.toLocal().toString().split(' ')[0]}',
+                                  booking.rentDate.toLocal().toString().split(
+                                    ' ',
+                                  )[0],
                                 ),
                               ],
                             ),
@@ -358,7 +362,9 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '${booking.returnDate.toLocal().toString().split(' ')[0]}',
+                                  booking.returnDate.toLocal().toString().split(
+                                    ' ',
+                                  )[0],
                                 ),
                               ],
                             ),
@@ -397,12 +403,14 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(booking.status).withOpacity(0.1),
+                        color: _getStatusColor(
+                          booking.status,
+                        ).withAlpha((0.1 * 255).toInt()),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _getStatusColor(
                             booking.status,
-                          ).withOpacity(0.3),
+                          ).withAlpha((0.3 * 255).toInt()),
                         ),
                       ),
                       child: Row(
@@ -430,7 +438,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                   style: TextStyle(
                                     color: _getStatusColor(
                                       booking.status,
-                                    ).withOpacity(0.8),
+                                    ).withAlpha((0.8 * 255).toInt()),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -479,7 +487,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                 .collection('bookings')
                                 .doc(booking.id)
                                 .update({'status': 'onProcess'});
-                            if (mounted) {
+                            if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -513,7 +521,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                   AddTransactionProofPage(booking: booking),
                             ),
                           );
-                          if (result == true && mounted) {
+                          if (result == true && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -566,7 +574,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                 .collection('bookings')
                                 .doc(booking.id)
                                 .update({'status': 'returned'});
-                            if (mounted) {
+                            if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -729,13 +737,13 @@ class _AddTransactionProofPageState extends State<AddTransactionProofPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  child: const Text('Finish & Activate Booking'),
                   onPressed: _isUploading
                       ? null
                       : () async {
                           if (_formKey.currentState?.validate() != true ||
-                              _proofUrl == null)
+                              _proofUrl == null) {
                             return;
+                          }
                           await FirebaseFirestore.instance
                               .collection('bookings')
                               .doc(widget.booking.id)
@@ -744,8 +752,9 @@ class _AddTransactionProofPageState extends State<AddTransactionProofPage> {
                                 'proofUrl': _proofUrl,
                                 'status': 'active',
                               });
-                          if (mounted) Navigator.of(context).pop(true);
+                          if (context.mounted) Navigator.of(context).pop(true);
                         },
+                  child: const Text('Finish & Activate Booking'),
                 ),
               ),
             ],

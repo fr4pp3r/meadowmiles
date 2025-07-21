@@ -107,9 +107,8 @@ class BookingCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.1),
+                              color: Theme.of(context).colorScheme.primary
+                                  .withAlpha((0.1 * 255).toInt()),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(

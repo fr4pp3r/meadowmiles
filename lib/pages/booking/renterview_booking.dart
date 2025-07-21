@@ -292,15 +292,17 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                                       if (await canLaunchUrl(uri)) {
                                         await launchUrl(uri);
                                       } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Could not launch dialer.',
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Could not launch dialer.',
+                                              ),
                                             ),
-                                          ),
-                                        );
+                                          );
+                                        }
                                       }
                                     },
                                   ),
@@ -345,7 +347,9 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '${booking.rentDate.toLocal().toString().split(' ')[0]}',
+                                  booking.rentDate.toLocal().toString().split(
+                                    ' ',
+                                  )[0],
                                 ),
                               ],
                             ),
@@ -356,7 +360,9 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '${booking.returnDate.toLocal().toString().split(' ')[0]}',
+                                  booking.returnDate.toLocal().toString().split(
+                                    ' ',
+                                  )[0],
                                 ),
                               ],
                             ),
@@ -395,12 +401,14 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(booking.status).withOpacity(0.1),
+                        color: _getStatusColor(
+                          booking.status,
+                        ).withAlpha((0.1 * 255).toInt()),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _getStatusColor(
                             booking.status,
-                          ).withOpacity(0.3),
+                          ).withAlpha((0.3 * 255).toInt()),
                         ),
                       ),
                       child: Row(
@@ -428,7 +436,7 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                                   style: TextStyle(
                                     color: _getStatusColor(
                                       booking.status,
-                                    ).withOpacity(0.8),
+                                    ).withAlpha((0.8 * 255).toInt()),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -461,7 +469,7 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                                   RateBookingPage(booking: booking),
                             ),
                           );
-                          if (result == true && mounted) {
+                          if (result == true && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Thank you for your feedback!'),
@@ -597,9 +605,6 @@ class _RateBookingPageState extends State<RateBookingPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  child: _isSubmitting
-                      ? const CircularProgressIndicator()
-                      : const Text('Submit Rating'),
                   onPressed: _isSubmitting
                       ? null
                       : () async {
@@ -612,8 +617,11 @@ class _RateBookingPageState extends State<RateBookingPage> {
                                 'rate': _rating,
                                 'feedback': _feedbackController.text,
                               });
-                          if (mounted) Navigator.of(context).pop(true);
+                          if (context.mounted) Navigator.of(context).pop(true);
                         },
+                  child: _isSubmitting
+                      ? const CircularProgressIndicator()
+                      : const Text('Submit Rating'),
                 ),
               ),
             ],

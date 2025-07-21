@@ -29,8 +29,11 @@ class StartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     var authState = context.watch<AuthState>();
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
         // Prevent back button from closing the app on the start page
         final shouldExit = await showDialog<bool>(
           context: context,
@@ -49,7 +52,10 @@ class StartPage extends StatelessWidget {
             ],
           ),
         );
-        return shouldExit ?? false;
+
+        if (shouldExit == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -77,9 +83,10 @@ class StartPage extends StatelessWidget {
                         width: double.infinity,
                         child: Text(
                           'Your next adventure starts here.',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                           textAlign: TextAlign.left,
                         ),
                       ),
@@ -87,9 +94,10 @@ class StartPage extends StatelessWidget {
                         width: double.infinity,
                         child: Text(
                           'Rent your perfect ride today!',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                           textAlign: TextAlign.left,
                         ),
                       ),
@@ -105,9 +113,8 @@ class StartPage extends StatelessWidget {
                         if (authState.currentUser == null) {
                           Navigator.pushNamed(context, '/login');
                         } else {
-                          final userModel = await authState.fetchCurrentUserModel(
-                            context,
-                          );
+                          final userModel = await authState
+                              .fetchCurrentUserModel(context);
                           if (userModel?.userType == UserModelType.rentee) {
                             if (context.mounted) {
                               Navigator.pushNamed(context, '/rentee_dashboard');

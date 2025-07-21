@@ -6,11 +6,7 @@ class VehicleCard2 extends StatelessWidget {
   final Vehicle vehicle;
   final VoidCallback? onTap;
 
-  const VehicleCard2({
-    super.key,
-    required this.vehicle,
-    this.onTap,
-  });
+  const VehicleCard2({super.key, required this.vehicle, this.onTap});
 
   Future<double> _fetchAverageRating() async {
     final snapshot = await FirebaseFirestore.instance
@@ -43,7 +39,9 @@ class VehicleCard2 extends StatelessWidget {
         return GestureDetector(
           onTap: onTap,
           child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             elevation: 4,
             shadowColor: Colors.black,
             margin: const EdgeInsets.all(8),
@@ -96,11 +94,14 @@ class VehicleCard2 extends StatelessWidget {
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                '${vehicle.pricePerDay.toStringAsFixed(0)}',
+                                vehicle.pricePerDay.toStringAsFixed(0),
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(fontWeight: FontWeight.bold),
                               ),
-                              const Text(' | day', style: TextStyle(fontSize: 12)),
+                              const Text(
+                                ' | day',
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ],
                           ),
                         ],
