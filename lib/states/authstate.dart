@@ -27,6 +27,16 @@ class AuthState extends ChangeNotifier {
     return UserModel.fromMap(doc.data()!, uid: doc.id);
   }
 
+  Future<UserModel?> fetchCurrentUserModelSilent() async {
+    if (currentUser == null) return null;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .get();
+    if (!doc.exists) return null;
+    return UserModel.fromMap(doc.data()!, uid: doc.id);
+  }
+
   Future<void> signIn(
     String email,
     String password,
