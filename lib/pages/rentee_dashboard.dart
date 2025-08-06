@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/rentee/renteebook_tab.dart';
 import 'package:meadowmiles/pages/rentee/renteehistory_tab.dart';
+import 'package:meadowmiles/pages/revenue.dart';
 import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
 
 class RenteeDashboardPage extends StatefulWidget {
@@ -17,8 +18,8 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
     RenteeBookTab(),
     RenteeHistoryTab(),
     VehicleTab(),
-    Center(child: Text('Revenues')),
-    Center(child: Text('Reports')),
+    RevenuePage(),
+    Center(child: Text('Devices')),
   ];
 
   void _onItemTapped(int index) {
@@ -96,8 +97,8 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
               label: 'Revenues',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart),
-              label: 'Reports',
+              icon: Icon(Icons.devices),
+              label: 'Devices',
             ),
           ],
           type: BottomNavigationBarType.fixed,

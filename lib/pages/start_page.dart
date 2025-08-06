@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/models/user_model.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
@@ -113,18 +112,7 @@ class StartPage extends StatelessWidget {
                         if (authState.currentUser == null) {
                           Navigator.pushNamed(context, '/login');
                         } else {
-                          final userModel = await authState
-                              .fetchCurrentUserModel(context);
-                          if (userModel?.userType == UserModelType.rentee) {
-                            if (context.mounted) {
-                              Navigator.pushNamed(context, '/rentee_dashboard');
-                            }
-                          } else if (userModel?.userType ==
-                              UserModelType.renter) {
-                            if (context.mounted) {
-                              Navigator.pushNamed(context, '/renter_dashboard');
-                            }
-                          }
+                          Navigator.pushNamed(context, '/renter_dashboard');
                         }
                       },
                       style: ElevatedButton.styleFrom(

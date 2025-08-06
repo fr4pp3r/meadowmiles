@@ -9,6 +9,8 @@ class AuthState extends ChangeNotifier {
 
   User? get currentUser => _auth.currentUser;
 
+  UserModel? currentUserModel;
+
   Future<UserModel?> fetchCurrentUserModel(BuildContext context) async {
     showDialog(
       context: context,
@@ -49,6 +51,7 @@ class AuthState extends ChangeNotifier {
     );
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+      currentUserModel = await fetchCurrentUserModelSilent();
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // Dismiss loading dialog
@@ -59,7 +62,7 @@ class AuthState extends ChangeNotifier {
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Sign in failed'),
-                content: Text('$e'),
+                content: Text(e.toString().split("] ")[1]),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),

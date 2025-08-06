@@ -107,7 +107,7 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
       case BookingStatus.pending:
         return 'Waiting for owner approval';
       case BookingStatus.onProcess:
-        return 'Your booking is being processed';
+        return 'Your booking is being processed, visit the vehicle soon for handover';
       case BookingStatus.active:
         return 'Enjoy your rental!';
       case BookingStatus.returned:

@@ -107,7 +107,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
       case BookingStatus.pending:
         return 'Waiting for your approval';
       case BookingStatus.onProcess:
-        return 'Booking is being processed';
+        return 'Booking is being processed, meet up soon for vehicle handover';
       case BookingStatus.active:
         return 'Vehicle is currently rented';
       case BookingStatus.returned:
@@ -507,7 +507,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                           color: Colors.white,
                         ),
                         label: const Text(
-                          'Add Transaction ID & Proof',
+                          'Activate Booking',
                           style: TextStyle(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -515,22 +515,57 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                           backgroundColor: Colors.blue,
                         ),
                         onPressed: () async {
-                          final result = await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  AddTransactionProofPage(booking: booking),
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Mark as Active'),
+                              content: const Text(
+                                'Are you sure you want to mark this booking as "Active"?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: const Text('Yes'),
+                                ),
+                              ],
                             ),
                           );
-                          if (result == true && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Transaction info added and booking activated.',
+                          if (confirm == true) {
+                            await FirebaseFirestore.instance
+                                .collection('bookings')
+                                .doc(booking.id)
+                                .update({'status': 'active'});
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Booking marked as Active.'),
                                 ),
-                              ),
-                            );
-                            Navigator.of(context).pop();
+                              );
+                              Navigator.of(context).pop();
+                            }
                           }
+                          // final result = await Navigator.of(context).push(
+                          //   MaterialPageRoute(
+                          //     builder: (context) =>
+                          //         AddTransactionProofPage(booking: booking),
+                          //   ),
+                          // );
+                          // if (result == true && context.mounted) {
+                          //   ScaffoldMessenger.of(context).showSnackBar(
+                          //     const SnackBar(
+                          //       content: Text(
+                          //         'Transaction info added and booking activated.',
+                          //       ),
+                          //     ),
+                          //   );
+                          //   Navigator.of(context).pop();
+                          // }
                         },
                       ),
                     if (booking.status == BookingStatus.active)

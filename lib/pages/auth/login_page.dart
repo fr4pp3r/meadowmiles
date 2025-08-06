@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/models/user_model.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
@@ -68,24 +67,13 @@ class _LoginPageState extends State<LoginPage> {
     _clearFields();
     if (authState.currentUser != null) {
       if (context.mounted) {
-        final userModel = await authState.fetchCurrentUserModel(context);
         // Navigate to the appropriate dashboard based on user type
-        if (userModel?.userType == UserModelType.rentee) {
-          if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/rentee_dashboard',
-              (route) => false,
-            );
-          }
-        } else if (userModel?.userType == UserModelType.renter) {
-          if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/renter_dashboard',
-              (route) => false,
-            );
-          }
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/renter_dashboard',
+            (route) => false,
+          );
         }
       }
     }

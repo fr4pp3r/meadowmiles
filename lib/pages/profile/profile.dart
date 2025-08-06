@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meadowmiles/states/appstate.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meadowmiles/states/authstate.dart';
@@ -37,20 +38,14 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _switchUserType() async {
+  Future<void> _verifyUser() async {
     if (_userModel == null) return;
 
-    setState(() => _isSwitching = true);
-
     try {
-      final newUserType = _userModel!.userType == UserModelType.renter
-          ? UserModelType.rentee
-          : UserModelType.renter;
-
       await FirebaseFirestore.instance
           .collection('users')
           .doc(_userModel!.uid)
-          .update({'userType': newUserType.toString().split('.').last});
+          .update({'verifiedUser': true});
 
       setState(() {
         _userModel = UserModel(
@@ -58,21 +53,93 @@ class _ProfilePageState extends State<ProfilePage> {
           name: _userModel!.name,
           email: _userModel!.email,
           phoneNumber: _userModel!.phoneNumber,
-          userType: newUserType,
+          userType: _userModel!.userType,
           createdAt: _userModel!.createdAt,
+          verifiedUser: true,
         );
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Switched to ${newUserType == UserModelType.renter ? "Renter" : "Owner"} mode successfully!',
-            ),
+          const SnackBar(
+            content: Text('User verified successfully!'),
             backgroundColor: Colors.green,
           ),
         );
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to verify user: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _switchUserType() async {
+    if (_userModel == null) return;
+
+    var appState = Provider.of<AppState>(context, listen: false);
+
+    setState(() => _isSwitching = true);
+
+    try {
+      if (_userModel!.userType == UserModelType.renter) {
+        // Perform actions specific to renters
+      } else if (_userModel!.userType == UserModelType.rentee &&
+          appState.activeDashboard == 'renter') {
+        // Perform actions specific to rentees
+        appState.activeDashboard = 'rentee';
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/rentee_dashboard',
+          (route) => false,
+        );
+      } else if (_userModel!.userType == UserModelType.rentee &&
+          appState.activeDashboard == 'rentee') {
+        // Perform actions specific to rentees
+        appState.activeDashboard = 'renter';
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/renter_dashboard',
+          (route) => false,
+        );
+      }
+
+      // final newUserType = _userModel!.userType == UserModelType.renter
+      //     ? UserModelType.rentee
+      //     : UserModelType.renter;
+
+      // await FirebaseFirestore.instance
+      //     .collection('users')
+      //     .doc(_userModel!.uid)
+      //     .update({'userType': newUserType.toString().split('.').last});
+
+      // setState(() {
+      //   _userModel = UserModel(
+      //     uid: _userModel!.uid,
+      //     name: _userModel!.name,
+      //     email: _userModel!.email,
+      //     phoneNumber: _userModel!.phoneNumber,
+      //     userType: newUserType,
+      //     createdAt: _userModel!.createdAt,
+      //     verifiedUser: _userModel!.verifiedUser,
+      //   );
+      // });
+
+      // if (mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     SnackBar(
+      //       content: Text(
+      //         'Switched to ${newUserType == UserModelType.renter ? "Renter" : "Owner"} mode successfully!',
+      //       ),
+      //       backgroundColor: Colors.green,
+      //     ),
+      //   );
+      // }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +167,8 @@ class _ProfilePageState extends State<ProfilePage> {
         body: Center(child: Text('Failed to load user data')),
       );
     }
+
+    var appState = Provider.of<AppState>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -332,13 +401,64 @@ class _ProfilePageState extends State<ProfilePage> {
                       context,
                       Icons.verified_user,
                       'Verification Status',
-                      authState.currentUser?.emailVerified == true
-                          ? 'Verified'
-                          : 'Unverified',
-                      authState.currentUser?.emailVerified == true
-                          ? Colors.green
-                          : Colors.orange,
+                      _userModel!.verifiedUser ? 'Verified' : 'Unverified',
+                      _userModel!.verifiedUser ? Colors.green : Colors.orange,
                     ),
+                    !_userModel!.verifiedUser
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                icon: const Icon(
+                                  Icons.email_outlined,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  'User Verification',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  await _verifyUser();
+                                },
+                                // onPressed: () async {
+                                //   try {
+                                //     await authState.currentUser
+                                //         ?.sendEmailVerification();
+                                //     if (context.mounted) {
+                                //       ScaffoldMessenger.of(context).showSnackBar(
+                                //         const SnackBar(
+                                //           content: Text('Verification email sent!'),
+                                //           backgroundColor: Colors.orange,
+                                //         ),
+                                //       );
+                                //     }
+                                //   } catch (e) {
+                                //     if (context.mounted) {
+                                //       ScaffoldMessenger.of(context).showSnackBar(
+                                //         SnackBar(
+                                //           content: Text(
+                                //             'Failed to send verification email: $e',
+                                //           ),
+                                //           backgroundColor: Colors.red,
+                                //         ),
+                                //       );
+                                //     }
+                                //   }
+                                // },
+                              ),
+                            ),
+                          )
+                        : const SizedBox(height: 0),
                     const SizedBox(height: 12),
 
                     _buildInfoRow(
@@ -379,8 +499,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   _isSwitching
                       ? 'Switching...'
                       : _userModel!.userType == UserModelType.renter
-                      ? 'Switch to Owner'
-                      : 'Switch to Renter',
+                      ? 'Apply for Owner'
+                      : _userModel!.userType == UserModelType.rentee &&
+                            appState.activeDashboard == 'renter'
+                      ? 'Owner Dashboard'
+                      : 'Renter Dashboard',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -409,6 +532,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

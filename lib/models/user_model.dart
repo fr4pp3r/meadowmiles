@@ -7,6 +7,7 @@ class UserModel {
   final String phoneNumber;
   final UserModelType userType;
   final DateTime? createdAt;
+  final bool verifiedUser;
 
   UserModel({
     required this.uid,
@@ -15,6 +16,7 @@ class UserModel {
     required this.phoneNumber,
     required this.userType,
     this.createdAt,
+    this.verifiedUser = false,
   });
 
   // Firestore serialization
@@ -34,6 +36,7 @@ class UserModel {
                 ? (map['createdAt'] as Timestamp).toDate()
                 : DateTime.tryParse(map['createdAt'].toString()))
           : null,
+      verifiedUser: map['verifiedUser'] ?? false,
     );
   }
 
@@ -45,6 +48,7 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'userType': userType.toString().split('.').last,
       'createdAt': createdAt,
+      'verifiedUser': verifiedUser,
     };
   }
 
