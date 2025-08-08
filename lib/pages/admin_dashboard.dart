@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:meadowmiles/pages/rentee/renteebook_tab.dart';
-import 'package:meadowmiles/pages/rentee/renteehistory_tab.dart';
-import 'package:meadowmiles/pages/revenue.dart';
-import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
+import 'package:meadowmiles/pages/admin/admin_users_tab.dart';
+import 'package:meadowmiles/pages/admin/admin_support_tab.dart';
+import 'package:meadowmiles/pages/admin/admin_data_tab.dart';
+import 'package:meadowmiles/pages/admin/admin_settings_page.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
-class RenteeDashboardPage extends StatefulWidget {
-  const RenteeDashboardPage({super.key});
+class AdminDashboardPage extends StatefulWidget {
+  const AdminDashboardPage({super.key});
 
   @override
-  State<RenteeDashboardPage> createState() => _RenteeDashboardPageState();
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
 }
 
-class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    RenteeBookTab(),
-    RenteeHistoryTab(),
-    VehicleTab(),
-    RevenuePage(),
-    Center(child: Text('Devices')),
+  static final List<Widget> _pages = <Widget>[
+    const AdminUsersTab(),
+    const AdminSupportTab(),
+    const AdminDataTab(),
   ];
 
   void _onItemTapped(int index) {
@@ -33,6 +31,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final authState = Provider.of<AuthState>(context, listen: false);
+    
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -42,7 +41,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Exit App'),
-            content: const Text('Are you sure you want to exit MeadowMiles?'),
+            content: const Text('Are you sure you want to exit MeadowMiles Admin?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -62,14 +61,39 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Owner Dashboard'),
-          centerTitle: true,
+          title: Row(
+            children: [
+              Icon(
+                Icons.admin_panel_settings,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Admin Dashboard',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          centerTitle: false,
           forceMaterialTransparency: true,
+          elevation: 0,
           actions: [
+            // Settings Button
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AdminSettingsPage(),
+                  ),
+                );
+              },
+            ),
+            // Profile Avatar
             IconButton(
               icon: Container(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -94,21 +118,20 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
                   child: Text(
                     authState.currentUserModel?.name.isNotEmpty == true
                         ? authState.currentUserModel!.name[0].toUpperCase()
-                        : 'U',
+                        : 'A',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 20,
                     ),
                   ),
                 ),
               ),
-              // icon: const CircleAvatar(
-              //   // backgroundImage: AssetImage('assets/profile_placeholder.png'),
-              //   backgroundColor: Colors.red,
-              // ),
               onPressed: () {
-                // Handle profile action
-                Navigator.pushNamed(context, '/profile');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AdminSettingsPage(),
+                  ),
+                );
               },
             ),
           ],
@@ -119,24 +142,16 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
           onTap: _onItemTapped,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.book_online),
-              label: 'Bookings',
+              icon: Icon(Icons.people),
+              label: 'Users',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: 'History',
+              icon: Icon(Icons.support_agent),
+              label: 'Support',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.directions_car),
-              label: 'Vehicles',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt),
-              label: 'Reports',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.location_on),
-              label: 'GPS',
+              icon: Icon(Icons.storage),
+              label: 'Data',
             ),
           ],
           type: BottomNavigationBarType.fixed,

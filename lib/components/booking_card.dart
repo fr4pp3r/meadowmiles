@@ -87,34 +87,49 @@ class BookingCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            make,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                          Flexible(
+                            flex: 2,
+                            child: Text(
+                              make,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            model,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary
-                                  .withAlpha((0.1 * 255).toInt()),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                          Flexible(
+                            flex: 2,
                             child: Text(
-                              type.toString().toUpperCase(),
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                              model,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            flex: 1,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary
+                                    .withAlpha((0.1 * 255).toInt()),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                type.toString().toUpperCase(),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
                         ],
@@ -138,21 +153,12 @@ class BookingCard extends StatelessWidget {
                         children: [
                           const Icon(Icons.calendar_today, size: 16),
                           const SizedBox(width: 4),
-                          Text(
-                            booking.rentDate.toLocal().toString().split(' ')[0],
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            '-',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            booking.returnDate.toLocal().toString().split(
-                              ' ',
-                            )[0],
-                            style: Theme.of(context).textTheme.bodySmall,
+                          Expanded(
+                            child: Text(
+                              '${booking.rentDate.toLocal().toString().split(' ')[0]} - ${booking.returnDate.toLocal().toString().split(' ')[0]}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -162,13 +168,37 @@ class BookingCard extends StatelessWidget {
                         children: [
                           const Icon(Icons.info_outline, size: 16),
                           const SizedBox(width: 4),
-                          Text(
-                            'Status: ${booking.status.toString().split('.').last}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                          Expanded(
+                            child: Text(
+                              'Status: ${booking.status.toString().split('.').last}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Price row
+                      Row(
+                        children: [
+                          const Icon(Icons.attach_money, size: 16),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Total: ₱${booking.totalPrice.toStringAsFixed(2)}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -176,18 +206,23 @@ class BookingCard extends StatelessWidget {
                       Row(
                         children: [
                           if (onCancel != null)
-                            OutlinedButton(
-                              onPressed: onCancel,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: onCancel,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                child: const Text('Cancel'),
                               ),
-                              child: const Text('Cancel'),
                             ),
-                          const SizedBox(width: 8),
+                          if (onCancel != null && onView != null)
+                            const SizedBox(width: 8),
                           if (onView != null)
-                            FilledButton(
-                              onPressed: onView,
-                              child: const Text('View'),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: onView,
+                                child: const Text('View'),
+                              ),
                             ),
                         ],
                       ),

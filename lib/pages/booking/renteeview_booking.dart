@@ -262,6 +262,12 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                               ],
                             ),
                             const SizedBox(height: 8),
+                            const Divider(),
+                            Text(
+                              "Renter Name",
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
                             Row(
                               children: [
                                 Icon(

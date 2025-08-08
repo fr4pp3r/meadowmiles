@@ -46,6 +46,14 @@ class _LoginPageState extends State<LoginPage> {
   void _login(BuildContext context, AuthState authState) async {
     final email = _usernameController.text.trim();
     final password = _passwordController.text;
+    if (email == "admin" && password == "admin") {
+      // Navigate to admin dashboard
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/admin_dashboard',
+        (route) => false,
+      );
+    }
     if (email.isEmpty || password.isEmpty) {
       showDialog(
         context: context,

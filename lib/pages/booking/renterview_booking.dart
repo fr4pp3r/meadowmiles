@@ -260,6 +260,12 @@ class _RenterViewBookingPageState extends State<RenterViewBookingPage> {
                               ],
                             ),
                             const SizedBox(height: 8),
+                            const Divider(),
+                            Text(
+                              "Owner Name",
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
                             Row(
                               children: [
                                 Icon(

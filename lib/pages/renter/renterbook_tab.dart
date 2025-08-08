@@ -40,7 +40,11 @@ class RenterBookTab extends StatelessWidget {
                 id: doc.id,
               ),
             )
-            .where((booking) => booking.status != BookingStatus.returned)
+            .where(
+              (booking) =>
+                  booking.status != BookingStatus.returned &&
+                  booking.status != BookingStatus.cancelled,
+            )
             .toList();
         if (bookings.isEmpty) {
           return const Center(child: Text('No active bookings.'));

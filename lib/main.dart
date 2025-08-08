@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meadowmiles/pages/admin_dashboard.dart';
 import 'package:meadowmiles/pages/profile/profile.dart';
 import 'package:meadowmiles/states/appstate.dart';
 import 'package:meadowmiles/states/authstate.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         '/rentee_dashboard': (context) => const RenteeDashboardPage(),
         '/renter_dashboard': (context) => const RenterDashboardPage(),
         '/profile': (context) => const ProfilePage(), // Temporary route
+        '/admin_dashboard': (context) => const AdminDashboardPage(),
       },
       home: const StartPage(),
     );
