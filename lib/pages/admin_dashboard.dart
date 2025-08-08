@@ -31,7 +31,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final authState = Provider.of<AuthState>(context, listen: false);
-    
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -41,7 +41,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Exit App'),
-            content: const Text('Are you sure you want to exit MeadowMiles Admin?'),
+            content: const Text(
+              'Are you sure you want to exit MeadowMiles Admin?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -141,18 +143,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people),
-              label: 'Users',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
             BottomNavigationBarItem(
               icon: Icon(Icons.support_agent),
               label: 'Support',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.storage),
-              label: 'Data',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.storage), label: 'Data'),
           ],
           type: BottomNavigationBarType.fixed,
         ),

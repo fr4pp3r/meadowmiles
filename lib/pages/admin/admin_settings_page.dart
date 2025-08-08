@@ -14,13 +14,13 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
   bool _autoBackupEnabled = true;
   bool _maintenanceModeEnabled = false;
   String _selectedTheme = 'System';
-  
+
   final List<String> _themeOptions = ['Light', 'Dark', 'System'];
 
   @override
   Widget build(BuildContext context) {
     final authState = Provider.of<AuthState>(context, listen: false);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Settings'),
@@ -43,10 +43,13 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                       children: [
                         CircleAvatar(
                           radius: 30,
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
                           child: Text(
                             authState.currentUserModel?.name.isNotEmpty == true
-                                ? authState.currentUserModel!.name[0].toUpperCase()
+                                ? authState.currentUserModel!.name[0]
+                                      .toUpperCase()
                                 : 'A',
                             style: const TextStyle(
                               color: Colors.white,
@@ -61,20 +64,27 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                authState.currentUserModel?.name ?? 'Administrator',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                authState.currentUserModel?.name ??
+                                    'Administrator',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                authState.currentUserModel?.email ?? 'admin@meadowmiles.com',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
+                                authState.currentUserModel?.email ??
+                                    'admin@meadowmiles.com',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.red.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
@@ -97,19 +107,21 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // System Settings Section
             _buildSectionTitle('System Settings'),
             const SizedBox(height: 8),
-            
+
             Card(
               child: Column(
                 children: [
                   SwitchListTile(
                     title: const Text('Enable Notifications'),
-                    subtitle: const Text('Receive admin notifications and alerts'),
+                    subtitle: const Text(
+                      'Receive admin notifications and alerts',
+                    ),
                     value: _notificationsEnabled,
                     onChanged: (value) {
                       setState(() {
@@ -148,13 +160,13 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // App Settings Section
             _buildSectionTitle('App Settings'),
             const SizedBox(height: 8),
-            
+
             Card(
               child: Column(
                 children: [
@@ -184,13 +196,13 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Actions Section
             _buildSectionTitle('Actions'),
             const SizedBox(height: 8),
-            
+
             Card(
               child: Column(
                 children: [
@@ -220,9 +232,9 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Logout Button
             SizedBox(
               width: double.infinity,
@@ -237,9 +249,9 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // App Version
             Center(
               child: Text(
@@ -459,10 +471,9 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
               final authState = Provider.of<AuthState>(context, listen: false);
               await authState.signOut(context);
               if (context.mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/start',
-                  (route) => false,
-                );
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/start', (route) => false);
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),

@@ -10,7 +10,8 @@ class AdminSupportTab extends StatefulWidget {
 class _AdminSupportTabState extends State<AdminSupportTab> {
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -37,7 +38,7 @@ class _AdminSupportTabState extends State<AdminSupportTab> {
           ),
           const SizedBox(height: 32),
           Card(
-            margin: const EdgeInsets.symmetric(horizontal: 32),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -76,6 +77,7 @@ class _AdminSupportTabState extends State<AdminSupportTab> {
               ),
             ),
           ),
+          const SizedBox(height: 32), // Add some bottom padding
         ],
       ),
     );
@@ -89,10 +91,7 @@ class _AdminSupportTabState extends State<AdminSupportTab> {
           Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),

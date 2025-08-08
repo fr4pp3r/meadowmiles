@@ -39,7 +39,8 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
               .doc(vehicleId)
               .get();
           if (vehicleDoc.exists) {
-            _vehicleCache[vehicleId] = vehicleDoc.data() as Map<String, dynamic>;
+            _vehicleCache[vehicleId] =
+                vehicleDoc.data() as Map<String, dynamic>;
           }
         } catch (e) {
           print('Error loading vehicle $vehicleId: $e');
@@ -72,9 +73,10 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
 
     return bookings.where((booking) {
       final query = _searchQuery.toLowerCase();
-      
+
       // Search in booking data
-      bool matches = booking.id.toLowerCase().contains(query) ||
+      bool matches =
+          booking.id.toLowerCase().contains(query) ||
           booking.vehicleId.toLowerCase().contains(query) ||
           booking.status.toString().toLowerCase().contains(query) ||
           booking.totalPrice.toString().contains(query);
@@ -85,8 +87,11 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
         final make = vehicleData['make']?.toString().toLowerCase() ?? '';
         final model = vehicleData['model']?.toString().toLowerCase() ?? '';
         final vehicleName = '$make $model'.toLowerCase();
-        matches = matches || vehicleName.contains(query) ||
-            make.contains(query) || model.contains(query);
+        matches =
+            matches ||
+            vehicleName.contains(query) ||
+            make.contains(query) ||
+            model.contains(query);
       }
 
       // Search in owner data
@@ -96,8 +101,11 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
         final lastName = userData['lastName']?.toString().toLowerCase() ?? '';
         final fullName = '$firstName $lastName'.toLowerCase();
         final email = userData['email']?.toString().toLowerCase() ?? '';
-        matches = matches || fullName.contains(query) ||
-            firstName.contains(query) || lastName.contains(query) ||
+        matches =
+            matches ||
+            fullName.contains(query) ||
+            firstName.contains(query) ||
+            lastName.contains(query) ||
             email.contains(query);
       }
 
@@ -112,7 +120,7 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
     if (userId == null) {
       return const Center(child: Text('Not logged in.'));
     }
-    
+
     return Column(
       children: [
         // Search Bar
@@ -149,7 +157,7 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
             },
           ),
         ),
-        
+
         // Bookings List
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
@@ -169,7 +177,7 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
               if (docs.isEmpty) {
                 return const Center(child: Text('No bookings found.'));
               }
-              
+
               final allBookings = docs
                   .map(
                     (doc) => Booking.fromMap(
@@ -187,7 +195,8 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
               return FutureBuilder<void>(
                 future: _loadAdditionalData(allBookings),
                 builder: (context, loadingSnapshot) {
-                  if (loadingSnapshot.connectionState == ConnectionState.waiting) {
+                  if (loadingSnapshot.connectionState ==
+                      ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
@@ -201,16 +210,21 @@ class _RenterHistoryTabState extends State<RenterHistoryTab> {
                           Icon(
                             Icons.search_off,
                             size: 64,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             _searchQuery.isEmpty
                                 ? 'No booking history found'
                                 : 'No bookings match your search',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                           if (_searchQuery.isNotEmpty) ...[
                             const SizedBox(height: 8),

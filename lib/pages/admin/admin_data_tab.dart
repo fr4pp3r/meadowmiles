@@ -8,15 +8,16 @@ class AdminDataTab extends StatefulWidget {
   State<AdminDataTab> createState() => _AdminDataTabState();
 }
 
-class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMixin {
+class _AdminDataTabState extends State<AdminDataTab>
+    with TickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -36,21 +37,14 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
           child: TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(
-                icon: Icon(Icons.people),
-                text: 'Users',
-              ),
-              Tab(
-                icon: Icon(Icons.directions_car),
-                text: 'Vehicles',
-              ),
-              Tab(
-                icon: Icon(Icons.book_online),
-                text: 'Bookings',
-              ),
+              Tab(icon: Icon(Icons.people), text: 'Users'),
+              Tab(icon: Icon(Icons.directions_car), text: 'Vehicles'),
+              Tab(icon: Icon(Icons.book_online), text: 'Bookings'),
             ],
             labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            unselectedLabelColor: Theme.of(
+              context,
+            ).colorScheme.onSurfaceVariant,
             indicator: BoxDecoration(
               color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
@@ -78,13 +72,13 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         final docs = snapshot.data?.docs ?? [];
-        
+
         return Column(
           children: [
             // Stats Card
@@ -100,16 +94,19 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 children: [
                   _buildStatItem('Total Users', docs.length.toString()),
                   _buildStatItem(
-                    'Verified', 
-                    docs.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return data['verifiedUser'] == true;
-                    }).length.toString(),
+                    'Verified',
+                    docs
+                        .where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          return data['verifiedUser'] == true;
+                        })
+                        .length
+                        .toString(),
                   ),
                 ],
               ),
             ),
-            
+
             // Action Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -133,9 +130,9 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Data List
             Expanded(
               child: ListView.builder(
@@ -144,12 +141,14 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 itemBuilder: (context, index) {
                   final doc = docs[index];
                   final data = doc.data() as Map<String, dynamic>;
-                  
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: data['verifiedUser'] == true ? Colors.green : Colors.grey,
+                        backgroundColor: data['verifiedUser'] == true
+                            ? Colors.green
+                            : Colors.grey,
                         child: Text(
                           (data['name'] ?? 'U')[0].toUpperCase(),
                           style: const TextStyle(color: Colors.white),
@@ -158,7 +157,8 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                       title: Text(data['name'] ?? 'Unknown'),
                       subtitle: Text(data['email'] ?? 'No email'),
                       trailing: PopupMenuButton<String>(
-                        onSelected: (value) => _handleDataAction(value, 'users', doc.id, data),
+                        onSelected: (value) =>
+                            _handleDataAction(value, 'users', doc.id, data),
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'edit',
@@ -200,13 +200,13 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         final docs = snapshot.data?.docs ?? [];
-        
+
         return Column(
           children: [
             // Stats Card
@@ -222,16 +222,19 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 children: [
                   _buildStatItem('Total Vehicles', docs.length.toString()),
                   _buildStatItem(
-                    'Available', 
-                    docs.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return data['isAvailable'] == true;
-                    }).length.toString(),
+                    'Available',
+                    docs
+                        .where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          return data['isAvailable'] == true;
+                        })
+                        .length
+                        .toString(),
                   ),
                 ],
               ),
             ),
-            
+
             // Action Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -255,9 +258,9 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Data List
             Expanded(
               child: ListView.builder(
@@ -266,18 +269,26 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 itemBuilder: (context, index) {
                   final doc = docs[index];
                   final data = doc.data() as Map<String, dynamic>;
-                  
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: data['isAvailable'] == true ? Colors.green : Colors.red,
-                        child: const Icon(Icons.directions_car, color: Colors.white),
+                        backgroundColor: data['isAvailable'] == true
+                            ? Colors.green
+                            : Colors.red,
+                        child: const Icon(
+                          Icons.directions_car,
+                          color: Colors.white,
+                        ),
                       ),
-                      title: Text('${data['make'] ?? 'Unknown'} ${data['model'] ?? ''}'),
+                      title: Text(
+                        '${data['make'] ?? 'Unknown'} ${data['model'] ?? ''}',
+                      ),
                       subtitle: Text('Price: ₱${data['pricePerDay'] ?? 0}/day'),
                       trailing: PopupMenuButton<String>(
-                        onSelected: (value) => _handleDataAction(value, 'vehicles', doc.id, data),
+                        onSelected: (value) =>
+                            _handleDataAction(value, 'vehicles', doc.id, data),
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'edit',
@@ -319,13 +330,13 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         final docs = snapshot.data?.docs ?? [];
-        
+
         return Column(
           children: [
             // Stats Card
@@ -341,16 +352,19 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 children: [
                   _buildStatItem('Total Bookings', docs.length.toString()),
                   _buildStatItem(
-                    'Active', 
-                    docs.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return data['status'] == 'active';
-                    }).length.toString(),
+                    'Active',
+                    docs
+                        .where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          return data['status'] == 'active';
+                        })
+                        .length
+                        .toString(),
                   ),
                 ],
               ),
             ),
-            
+
             // Action Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -374,9 +388,9 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Data List
             Expanded(
               child: ListView.builder(
@@ -385,18 +399,24 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
                 itemBuilder: (context, index) {
                   final doc = docs[index];
                   final data = doc.data() as Map<String, dynamic>;
-                  
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor: _getStatusColor(data['status'] ?? ''),
-                        child: const Icon(Icons.book_online, color: Colors.white),
+                        child: const Icon(
+                          Icons.book_online,
+                          color: Colors.white,
+                        ),
                       ),
                       title: Text('Booking ${doc.id.substring(0, 8)}...'),
-                      subtitle: Text('Status: ${data['status'] ?? 'Unknown'} • ₱${data['totalPrice'] ?? 0}'),
+                      subtitle: Text(
+                        'Status: ${data['status'] ?? 'Unknown'} • ₱${data['totalPrice'] ?? 0}',
+                      ),
                       trailing: PopupMenuButton<String>(
-                        onSelected: (value) => _handleDataAction(value, 'bookings', doc.id, data),
+                        onSelected: (value) =>
+                            _handleDataAction(value, 'bookings', doc.id, data),
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'edit',
@@ -436,14 +456,11 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
       children: [
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
@@ -463,7 +480,12 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
     }
   }
 
-  void _handleDataAction(String action, String collection, String docId, Map<String, dynamic> data) {
+  void _handleDataAction(
+    String action,
+    String collection,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
     switch (action) {
       case 'edit':
         _showEditDialog(collection, docId, data);
@@ -474,7 +496,11 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
     }
   }
 
-  void _showEditDialog(String collection, String docId, Map<String, dynamic> data) {
+  void _showEditDialog(
+    String collection,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -492,12 +518,16 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
     );
   }
 
-  void _showDeleteConfirmation(String collection, String docId, Map<String, dynamic> data) {
-    final itemName = collection == 'users' 
+  void _showDeleteConfirmation(
+    String collection,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
+    final itemName = collection == 'users'
         ? data['name'] ?? 'Unknown'
         : collection == 'vehicles'
-            ? '${data['make'] ?? 'Unknown'} ${data['model'] ?? ''}'
-            : 'Booking ${docId.substring(0, 8)}...';
+        ? '${data['make'] ?? 'Unknown'} ${data['model'] ?? ''}'
+        : 'Booking ${docId.substring(0, 8)}...';
 
     showDialog(
       context: context,
@@ -524,10 +554,17 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
     );
   }
 
-  Future<void> _deleteItem(String collection, String docId, String itemName) async {
+  Future<void> _deleteItem(
+    String collection,
+    String docId,
+    String itemName,
+  ) async {
     try {
-      await FirebaseFirestore.instance.collection(collection).doc(docId).delete();
-      
+      await FirebaseFirestore.instance
+          .collection(collection)
+          .doc(docId)
+          .delete();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -573,11 +610,10 @@ class _AdminDataTabState extends State<AdminDataTab> with TickerProviderStateMix
   void _exportData(String collection) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Export functionality for $collection will be implemented'),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {},
+        content: Text(
+          'Export functionality for $collection will be implemented',
         ),
+        action: SnackBarAction(label: 'OK', onPressed: () {}),
       ),
     );
   }

@@ -13,8 +13,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilter = 'All';
-  
-  final List<String> _filterOptions = ['All', 'Verified', 'Unverified', 'Banned'];
+
+  final List<String> _filterOptions = [
+    'All',
+    'Verified',
+    'Unverified',
+    'Banned',
+  ];
 
   @override
   void dispose() {
@@ -63,7 +68,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 },
               ),
               const SizedBox(height: 12),
-              
+
               // Filter Chips
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -80,7 +85,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                             _selectedFilter = filter;
                           });
                         },
-                        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        selectedColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.2),
                         checkmarkColor: Theme.of(context).colorScheme.primary,
                       ),
                     );
@@ -90,7 +97,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             ],
           ),
         ),
-        
+
         // Users List
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
@@ -102,20 +109,23 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
-              
+
               final docs = snapshot.data?.docs ?? [];
               if (docs.isEmpty) {
                 return const Center(child: Text('No users found.'));
               }
-              
+
               final users = docs
                   .map((doc) {
                     try {
-                      return UserModel.fromMap(doc.data() as Map<String, dynamic>, uid: doc.id);
+                      return UserModel.fromMap(
+                        doc.data() as Map<String, dynamic>,
+                        uid: doc.id,
+                      );
                     } catch (e) {
                       return null;
                     }
@@ -123,17 +133,18 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   .where((user) => user != null)
                   .cast<UserModel>()
                   .toList();
-              
+
               // Apply filters
               final filteredUsers = users.where((user) {
                 // Search filter
                 if (_searchQuery.isNotEmpty) {
                   final query = _searchQuery.toLowerCase();
-                  final matchesSearch = user.name.toLowerCase().contains(query) ||
+                  final matchesSearch =
+                      user.name.toLowerCase().contains(query) ||
                       user.email.toLowerCase().contains(query);
                   if (!matchesSearch) return false;
                 }
-                
+
                 // Status filter
                 switch (_selectedFilter) {
                   case 'Verified':
@@ -147,7 +158,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                     return true;
                 }
               }).toList();
-              
+
               if (filteredUsers.isEmpty) {
                 return Center(
                   child: Column(
@@ -171,7 +182,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   ),
                 );
               }
-              
+
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: filteredUsers.length,
@@ -192,7 +203,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: user.verifiedUser == true ? Colors.green : Colors.orange,
+          backgroundColor: user.verifiedUser == true
+              ? Colors.green
+              : Colors.orange,
           child: Text(
             user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
             style: const TextStyle(
@@ -215,13 +228,17 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 Icon(
                   user.verifiedUser == true ? Icons.verified : Icons.pending,
                   size: 16,
-                  color: user.verifiedUser == true ? Colors.green : Colors.orange,
+                  color: user.verifiedUser == true
+                      ? Colors.green
+                      : Colors.orange,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   user.verifiedUser == true ? 'Verified' : 'Unverified',
                   style: TextStyle(
-                    color: user.verifiedUser == true ? Colors.green : Colors.orange,
+                    color: user.verifiedUser == true
+                        ? Colors.green
+                        : Colors.orange,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -299,16 +316,15 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   Future<void> _toggleUserVerification(UserModel user, bool verified) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({'verifiedUser': verified});
-      
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'verifiedUser': verified},
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              verified 
+              verified
                   ? 'User ${user.name} has been verified'
                   : 'User ${user.name} verification has been removed',
             ),
@@ -340,7 +356,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             _buildDetailRow('Name:', user.name),
             _buildDetailRow('Email:', user.email),
             _buildDetailRow('Phone:', user.phoneNumber),
-            _buildDetailRow('Verified:', user.verifiedUser == true ? 'Yes' : 'No'),
+            _buildDetailRow(
+              'Verified:',
+              user.verifiedUser == true ? 'Yes' : 'No',
+            ),
             _buildDetailRow('User ID:', user.uid),
           ],
         ),
@@ -367,9 +386,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          Expanded(
-            child: Text(value.isNotEmpty ? value : 'N/A'),
-          ),
+          Expanded(child: Text(value.isNotEmpty ? value : 'N/A')),
         ],
       ),
     );
@@ -407,7 +424,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           .collection('users')
           .doc(user.uid)
           .delete();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
