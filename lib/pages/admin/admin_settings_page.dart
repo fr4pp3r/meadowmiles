@@ -13,9 +13,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
   bool _notificationsEnabled = true;
   bool _autoBackupEnabled = true;
   bool _maintenanceModeEnabled = false;
-  String _selectedTheme = 'System';
-
-  final List<String> _themeOptions = ['Light', 'Dark', 'System'];
 
   @override
   Widget build(BuildContext context) {
@@ -171,14 +168,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
               child: Column(
                 children: [
                   ListTile(
-                    title: const Text('Theme'),
-                    subtitle: Text('Current: $_selectedTheme'),
-                    leading: const Icon(Icons.palette),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _showThemeDialog(),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
                     title: const Text('Database Management'),
                     subtitle: const Text('Advanced database operations'),
                     leading: const Icon(Icons.storage),
@@ -312,31 +301,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
     );
   }
 
-  void _showThemeDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Theme'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: _themeOptions.map((theme) {
-            return RadioListTile<String>(
-              title: Text(theme),
-              value: theme,
-              groupValue: _selectedTheme,
-              onChanged: (value) {
-                setState(() {
-                  _selectedTheme = value!;
-                });
-                Navigator.of(context).pop();
-              },
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
   void _showDatabaseDialog() {
     showDialog(
       context: context,
@@ -437,7 +401,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 _notificationsEnabled = true;
                 _autoBackupEnabled = true;
                 _maintenanceModeEnabled = false;
-                _selectedTheme = 'System';
               });
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(

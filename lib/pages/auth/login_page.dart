@@ -53,8 +53,7 @@ class _LoginPageState extends State<LoginPage> {
         '/admin_dashboard',
         (route) => false,
       );
-    }
-    if (email.isEmpty || password.isEmpty) {
+    } else if (email.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -70,18 +69,19 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
       return;
-    }
-    await authState.signIn(email, password, context);
-    _clearFields();
-    if (authState.currentUser != null) {
-      if (context.mounted) {
-        // Navigate to the appropriate dashboard based on user type
+    } else {
+      await authState.signIn(email, password, context);
+      _clearFields();
+      if (authState.currentUser != null) {
         if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            '/renter_dashboard',
-            (route) => false,
-          );
+          // Navigate to the appropriate dashboard based on user type
+          if (context.mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/renter_dashboard',
+              (route) => false,
+            );
+          }
         }
       }
     }

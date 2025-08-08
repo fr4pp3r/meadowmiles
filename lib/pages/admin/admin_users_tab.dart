@@ -357,6 +357,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             _buildDetailRow('Email:', user.email),
             _buildDetailRow('Phone:', user.phoneNumber),
             _buildDetailRow(
+              'User Type:',
+              user.userType.toString().split('.').last.toUpperCase(),
+            ),
+            _buildDetailRow(
               'Verified:',
               user.verifiedUser == true ? 'Yes' : 'No',
             ),

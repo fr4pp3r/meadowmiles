@@ -80,17 +80,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           forceMaterialTransparency: true,
           elevation: 0,
           actions: [
-            // Settings Button
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const AdminSettingsPage(),
-                  ),
-                );
-              },
-            ),
             // Profile Avatar
             IconButton(
               icon: Container(
