@@ -52,29 +52,29 @@ class _AddBookingPageState extends State<AddBookingPage> {
     if (_currentStep > 0) setState(() => _currentStep--);
   }
 
-  Future<void> _selectDate(BuildContext context, bool isRent) async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: isRent
-          ? (_rentDate ?? now)
-          : (_returnDate ?? now.add(const Duration(days: 1))),
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isRent) {
-          _rentDate = picked;
-          if (_returnDate != null && _returnDate!.isBefore(_rentDate!)) {
-            _returnDate = null;
-          }
-        } else {
-          _returnDate = picked;
-        }
-      });
-    }
-  }
+  // Future<void> _selectDate(BuildContext context, bool isRent) async {
+  //   final now = DateTime.now();
+  //   final picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: isRent
+  //         ? (_rentDate ?? now)
+  //         : (_returnDate ?? now.add(const Duration(days: 1))),
+  //     firstDate: now,
+  //     lastDate: now.add(const Duration(days: 365)),
+  //   );
+  //   if (picked != null) {
+  //     setState(() {
+  //       if (isRent) {
+  //         _rentDate = picked;
+  //         if (_returnDate != null && _returnDate!.isBefore(_rentDate!)) {
+  //           _returnDate = null;
+  //         }
+  //       } else {
+  //         _returnDate = picked;
+  //       }
+  //     });
+  //   }
+  // }
 
   Future<void> _submitBooking() async {
     final authState = Provider.of<AuthState>(context, listen: false);
@@ -239,7 +239,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
                         }
                       }
                       if (hasOverlap) {
-                        if (mounted) {
+                        if (context.mounted) {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(

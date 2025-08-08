@@ -107,7 +107,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
       case BookingStatus.pending:
         return 'Waiting for your approval';
       case BookingStatus.onProcess:
-        return 'Booking is being processed';
+        return 'Booking is being processed, meet up soon for vehicle handover';
       case BookingStatus.active:
         return 'Vehicle is currently rented';
       case BookingStatus.returned:
@@ -262,6 +262,12 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                               ],
                             ),
                             const SizedBox(height: 8),
+                            const Divider(),
+                            Text(
+                              "Renter Name",
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
                             Row(
                               children: [
                                 Icon(
@@ -294,15 +300,17 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                       if (await canLaunchUrl(uri)) {
                                         await launchUrl(uri);
                                       } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Could not launch dialer.',
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Could not launch dialer.',
+                                              ),
                                             ),
-                                          ),
-                                        );
+                                          );
+                                        }
                                       }
                                     },
                                   ),
@@ -347,7 +355,9 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '${booking.rentDate.toLocal().toString().split(' ')[0]}',
+                                  booking.rentDate.toLocal().toString().split(
+                                    ' ',
+                                  )[0],
                                 ),
                               ],
                             ),
@@ -358,7 +368,9 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '${booking.returnDate.toLocal().toString().split(' ')[0]}',
+                                  booking.returnDate.toLocal().toString().split(
+                                    ' ',
+                                  )[0],
                                 ),
                               ],
                             ),
@@ -397,12 +409,14 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(booking.status).withOpacity(0.1),
+                        color: _getStatusColor(
+                          booking.status,
+                        ).withAlpha((0.1 * 255).toInt()),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _getStatusColor(
                             booking.status,
-                          ).withOpacity(0.3),
+                          ).withAlpha((0.3 * 255).toInt()),
                         ),
                       ),
                       child: Row(
@@ -430,7 +444,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                   style: TextStyle(
                                     color: _getStatusColor(
                                       booking.status,
-                                    ).withOpacity(0.8),
+                                    ).withAlpha((0.8 * 255).toInt()),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -479,7 +493,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                 .collection('bookings')
                                 .doc(booking.id)
                                 .update({'status': 'onProcess'});
-                            if (mounted) {
+                            if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -499,7 +513,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                           color: Colors.white,
                         ),
                         label: const Text(
-                          'Add Transaction ID & Proof',
+                          'Activate Booking',
                           style: TextStyle(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -507,22 +521,57 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                           backgroundColor: Colors.blue,
                         ),
                         onPressed: () async {
-                          final result = await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  AddTransactionProofPage(booking: booking),
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Mark as Active'),
+                              content: const Text(
+                                'Are you sure you want to mark this booking as "Active"?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: const Text('Yes'),
+                                ),
+                              ],
                             ),
                           );
-                          if (result == true && mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Transaction info added and booking activated.',
+                          if (confirm == true) {
+                            await FirebaseFirestore.instance
+                                .collection('bookings')
+                                .doc(booking.id)
+                                .update({'status': 'active'});
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Booking marked as Active.'),
                                 ),
-                              ),
-                            );
-                            Navigator.of(context).pop();
+                              );
+                              Navigator.of(context).pop();
+                            }
                           }
+                          // final result = await Navigator.of(context).push(
+                          //   MaterialPageRoute(
+                          //     builder: (context) =>
+                          //         AddTransactionProofPage(booking: booking),
+                          //   ),
+                          // );
+                          // if (result == true && context.mounted) {
+                          //   ScaffoldMessenger.of(context).showSnackBar(
+                          //     const SnackBar(
+                          //       content: Text(
+                          //         'Transaction info added and booking activated.',
+                          //       ),
+                          //     ),
+                          //   );
+                          //   Navigator.of(context).pop();
+                          // }
                         },
                       ),
                     if (booking.status == BookingStatus.active)
@@ -566,7 +615,7 @@ class _RenteeViewBookingPageState extends State<RenteeViewBookingPage> {
                                 .collection('bookings')
                                 .doc(booking.id)
                                 .update({'status': 'returned'});
-                            if (mounted) {
+                            if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -729,13 +778,13 @@ class _AddTransactionProofPageState extends State<AddTransactionProofPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  child: const Text('Finish & Activate Booking'),
                   onPressed: _isUploading
                       ? null
                       : () async {
                           if (_formKey.currentState?.validate() != true ||
-                              _proofUrl == null)
+                              _proofUrl == null) {
                             return;
+                          }
                           await FirebaseFirestore.instance
                               .collection('bookings')
                               .doc(widget.booking.id)
@@ -744,8 +793,9 @@ class _AddTransactionProofPageState extends State<AddTransactionProofPage> {
                                 'proofUrl': _proofUrl,
                                 'status': 'active',
                               });
-                          if (mounted) Navigator.of(context).pop(true);
+                          if (context.mounted) Navigator.of(context).pop(true);
                         },
+                  child: const Text('Finish & Activate Booking'),
                 ),
               ),
             ],

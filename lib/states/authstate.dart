@@ -9,6 +9,8 @@ class AuthState extends ChangeNotifier {
 
   User? get currentUser => _auth.currentUser;
 
+  UserModel? currentUserModel;
+
   Future<UserModel?> fetchCurrentUserModel(BuildContext context) async {
     showDialog(
       context: context,
@@ -27,6 +29,16 @@ class AuthState extends ChangeNotifier {
     return UserModel.fromMap(doc.data()!, uid: doc.id);
   }
 
+  Future<UserModel?> fetchCurrentUserModelSilent() async {
+    if (currentUser == null) return null;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .get();
+    if (!doc.exists) return null;
+    return UserModel.fromMap(doc.data()!, uid: doc.id);
+  }
+
   Future<void> signIn(
     String email,
     String password,
@@ -39,6 +51,7 @@ class AuthState extends ChangeNotifier {
     );
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+      currentUserModel = await fetchCurrentUserModelSilent();
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // Dismiss loading dialog
@@ -49,7 +62,7 @@ class AuthState extends ChangeNotifier {
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Sign in failed'),
-                content: Text('$e'),
+                content: Text(e.toString().split("] ")[1]),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),

@@ -40,57 +40,67 @@ class RenteeBookTab extends StatelessWidget {
                 id: doc.id,
               ),
             )
-            .where((booking) => booking.status != BookingStatus.returned)
+            .where(
+              (booking) =>
+                  booking.status != BookingStatus.returned &&
+                  booking.status != BookingStatus.cancelled,
+            )
             .toList();
-        return ListView.builder(
-          itemCount: bookings.length,
-          itemBuilder: (context, index) {
-            final booking = bookings[index];
-            final isCancellable =
-                booking.status != BookingStatus.cancelled &&
-                booking.status != BookingStatus.returned;
-            return BookingCard(
-              booking: booking,
-              onCancel: isCancellable
-                  ? () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Cancel Booking'),
-                          content: const Text(
-                            'Are you sure you want to cancel this booking?',
+        if (bookings.isEmpty) {
+          return const Center(child: Text('No active/pending bookings found.'));
+        } else {
+          return ListView.builder(
+            itemCount: bookings.length,
+            itemBuilder: (context, index) {
+              final booking = bookings[index];
+              final isCancellable =
+                  booking.status != BookingStatus.cancelled &&
+                  booking.status != BookingStatus.returned;
+              return BookingCard(
+                booking: booking,
+                onCancel: isCancellable
+                    ? () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Cancel Booking'),
+                            content: const Text(
+                              'Are you sure you want to cancel this booking?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text('No'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text('Yes'),
+                              ),
+                            ],
                           ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('No'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: const Text('Yes'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm == true) {
-                        await FirebaseFirestore.instance
-                            .collection('bookings')
-                            .doc(booking.id)
-                            .update({'status': 'cancelled'});
+                        );
+                        if (confirm == true) {
+                          await FirebaseFirestore.instance
+                              .collection('bookings')
+                              .doc(booking.id)
+                              .update({'status': 'cancelled'});
+                        }
                       }
-                    }
-                  : null,
-              onView: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        RenteeViewBookingPage(booking: booking),
-                  ),
-                );
-              },
-            );
-          },
-        );
+                    : null,
+                onView: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          RenteeViewBookingPage(booking: booking),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        }
       },
     );
   }

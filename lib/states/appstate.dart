@@ -22,6 +22,26 @@ class AppState extends ChangeNotifier {
   //   notifyListeners();
   // }
 
+  String activeDashboard = 'renter';
+
+  Future<String?> uploadProfileImage(XFile pickedFile) async {
+    final file = File(pickedFile.path);
+    final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    final storageResponse = await Supabase.instance.client.storage
+        .from('profile-img') // your bucket name
+        .upload(fileName, file);
+
+    if (storageResponse.isEmpty) return null;
+
+    // Get the public URL
+    final publicUrl = Supabase.instance.client.storage
+        .from('profile-img')
+        .getPublicUrl(fileName);
+
+    return publicUrl;
+  }
+
   Future<String?> uploadVehicleImage(XFile pickedFile) async {
     final file = File(pickedFile.path);
     final fileName = 'vehicle_${DateTime.now().millisecondsSinceEpoch}.jpg';

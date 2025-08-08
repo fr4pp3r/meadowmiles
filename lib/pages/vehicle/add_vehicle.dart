@@ -256,8 +256,9 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Required';
                         final price = double.tryParse(v);
-                        if (price == null || price < 0)
+                        if (price == null || price < 0) {
                           return 'Enter a valid price';
+                        }
                         return null;
                       },
                     ),

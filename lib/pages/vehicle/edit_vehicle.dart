@@ -157,26 +157,29 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
       return;
     }
     // Confirm removal
-    final confirm = await showDialog<bool>(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Remove Vehicle'),
-        content: const Text(
-          'Are you sure you want to remove this vehicle? This action cannot be undone.',
+    bool? confirm = false;
+    if (mounted) {
+      confirm = await showDialog<bool>(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Remove Vehicle'),
+          content: const Text(
+            'Are you sure you want to remove this vehicle? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+      );
+    }
     if (confirm != true) {
       setState(() => isLoading = false);
       return;
@@ -505,8 +508,9 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                                   ? null
                                   : () async {
                                       await _updateVehicle();
-                                      if (mounted)
+                                      if (context.mounted) {
                                         Navigator.of(context).pop(true);
+                                      }
                                     },
                               child: isLoading
                                   ? const SizedBox(
