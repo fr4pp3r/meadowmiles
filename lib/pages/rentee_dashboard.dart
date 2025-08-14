@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/rentee/renteebook_tab.dart';
 import 'package:meadowmiles/pages/rentee/renteehistory_tab.dart';
+import 'package:meadowmiles/pages/rentee_gps_page.dart';
 import 'package:meadowmiles/pages/revenue.dart';
 import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
 import 'package:meadowmiles/states/authstate.dart';
@@ -21,7 +22,7 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
     RenteeHistoryTab(),
     VehicleTab(),
     RevenuePage(),
-    Center(child: Text('Devices')),
+    RenteeGpsPage(),
   ];
 
   void _onItemTapped(int index) {
