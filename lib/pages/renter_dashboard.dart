@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/renter/home/home_tab.dart';
 import 'package:meadowmiles/pages/renter/renterbook_tab.dart';
 import 'package:meadowmiles/pages/renter/renterhistory_tab.dart';
+import 'package:meadowmiles/pages/renter_gps_part.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 
@@ -57,6 +58,7 @@ class _RenterDashboardContentState extends State<_RenterDashboardContent> {
     HomeTab(),
     RenterBookTab(),
     RenterHistoryTab(),
+    RenterGpsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -123,8 +125,14 @@ class _RenterDashboardContentState extends State<_RenterDashboardContent> {
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withOpacity(0.6),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
@@ -132,6 +140,10 @@ class _RenterDashboardContentState extends State<_RenterDashboardContent> {
             label: 'Bookings',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.gps_fixed),
+            label: 'GPS Device',
+          ),
         ],
       ),
     );
