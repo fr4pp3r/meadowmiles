@@ -189,7 +189,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: const Text('Cancel'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
+                      onPressed: () {
+                        Navigator.of(context).pop(true);
+                        appState.activeDashboard = 'renter';
+                      },
                       child: const Text('Sign Out'),
                     ),
                   ],

@@ -234,7 +234,7 @@ class _RevenuePageState extends State<RevenuePage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withAlpha((0.1 * 255).toInt()),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -580,7 +580,7 @@ class _RevenuePageState extends State<RevenuePage> {
                           },
                           selectedColor: Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.2),
+                          ).colorScheme.primary.withAlpha((0.2 * 255).toInt()),
                           checkmarkColor: Theme.of(context).colorScheme.primary,
                         );
                       }).toList(),
@@ -600,7 +600,7 @@ class _RevenuePageState extends State<RevenuePage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withAlpha((0.1 * 255).toInt()),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
