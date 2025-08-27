@@ -44,10 +44,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                             context,
                           ).colorScheme.primary,
                           child: Text(
-                            authState.currentUserModel?.name.isNotEmpty == true
-                                ? authState.currentUserModel!.name[0]
-                                      .toUpperCase()
-                                : 'A',
+                            'A',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -61,14 +58,12 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                authState.currentUserModel?.name ??
-                                    'Administrator',
+                                'Administrator',
                                 style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                authState.currentUserModel?.email ??
-                                    'admin@meadowmiles.com',
+                                'admin@meadowmiles.com',
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
                                       color: Theme.of(

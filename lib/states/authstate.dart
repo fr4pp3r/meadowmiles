@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/main.dart';
 import 'package:meadowmiles/models/user_model.dart';
@@ -52,6 +53,43 @@ class AuthState extends ChangeNotifier {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       currentUserModel = await fetchCurrentUserModelSilent();
+
+      // Check if user account is marked for deletion
+      if (currentUserModel != null && currentUserModel!.markDelete) {
+        // Sign out the user immediately
+        await _auth.signOut();
+        currentUserModel = null;
+
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Dismiss loading dialog
+          Future.delayed(Duration.zero, () {
+            if (context.mounted) {
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Account Unavailable'),
+                  content: const Text(
+                    'This account is marked for deletion and cannot be accessed.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          });
+        }
+        return;
+      }
+
+      // Update user's online status to true
+      if (currentUser != null) {
+        await updateUserOnlineStatus(true);
+      }
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // Dismiss loading dialog
@@ -79,13 +117,42 @@ class AuthState extends ChangeNotifier {
     }
   }
 
+  Future<void> updateUserOnlineStatus(bool isOnline) async {
+    if (currentUser == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.uid)
+          .update({'online': isOnline});
+
+      // Update the local currentUserModel if it exists
+      if (currentUserModel != null) {
+        // We need to create a new UserModel with updated online status
+        // Since the fields are final, we'll refetch the user data
+        currentUserModel = await fetchCurrentUserModelSilent();
+      }
+    } catch (e) {
+      debugPrint('Failed to update online status: $e');
+    }
+  }
+
   Future<void> signOut(BuildContext context) async {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const LoadingDialog(),
     );
+
+    // Update user's online status to false before signing out
+    if (currentUser != null) {
+      await updateUserOnlineStatus(false);
+    }
+
     await _auth.signOut();
+    if (_auth.currentUser == null) {
+      currentUserModel = null;
+    }
     if (context.mounted) {
       Navigator.of(
         context,

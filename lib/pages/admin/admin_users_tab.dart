@@ -400,9 +400,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete User'),
+        title: const Text('Mark User for Deletion'),
         content: Text(
-          'Are you sure you want to delete user "${user.name}"? This action cannot be undone.',
+          'Are you sure you want to mark user "${user.name}" for deletion? This will prevent them from logging in and their account can be permanently removed later.',
         ),
         actions: [
           TextButton(
@@ -414,8 +414,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               Navigator.of(context).pop();
               await _deleteUser(user);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: const Text('Mark for Deletion'),
           ),
         ],
       ),
@@ -424,16 +424,15 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   Future<void> _deleteUser(UserModel user) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .delete();
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'markDelete': true, 'markDeleteAt': FieldValue.serverTimestamp()},
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('User ${user.name} has been deleted'),
-            backgroundColor: Colors.red,
+            content: Text('User ${user.name} has been marked for deletion'),
+            backgroundColor: Colors.orange,
           ),
         );
       }
@@ -441,7 +440,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting user: $e'),
+            content: Text('Error marking user for deletion: $e'),
             backgroundColor: Colors.red,
           ),
         );

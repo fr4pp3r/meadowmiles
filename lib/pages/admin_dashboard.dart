@@ -107,9 +107,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
                 child: Center(
                   child: Text(
-                    authState.currentUserModel?.name.isNotEmpty == true
-                        ? authState.currentUserModel!.name[0].toUpperCase()
-                        : 'A',
+                    'A',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       color: Colors.white,
                       fontSize: 20,
