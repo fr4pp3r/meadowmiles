@@ -6,7 +6,9 @@ import 'package:meadowmiles/states/authstate.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
+import 'dart:convert';
 
 class RenteeGpsPage extends StatefulWidget {
   const RenteeGpsPage({super.key});
@@ -526,32 +528,49 @@ class _RenteeGpsPageState extends State<RenteeGpsPage>
   }
 
   void _showAddDeviceDialog() {
-    final nameController = TextEditingController();
+    showDialog(context: context, builder: (context) => BleDeviceDialog());
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Register New Device'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Device Name',
-            hintText: 'e.g., My Car Tracker',
-            border: OutlineInputBorder(),
+  Future<void> _registerDeviceWithBLE(
+    String deviceId,
+    String deviceName,
+  ) async {
+    final authState = Provider.of<AuthState>(context, listen: false);
+    final userUid = authState.currentUser?.uid;
+
+    if (userUid == null) return;
+
+    try {
+      final device = TrackingDevice(
+        id: deviceId, // Use the BLE device ID
+        name: deviceName,
+        userUid: userUid,
+        registeredAt: DateTime.now(),
+      );
+
+      await FirebaseFirestore.instance
+          .collection('tracking_devices')
+          .doc(deviceId)
+          .set(device.toMap());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Device "$deviceName" registered successfully'),
+            backgroundColor: Colors.green,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error registering device: $e'),
+            backgroundColor: Colors.red,
           ),
-          ElevatedButton(
-            onPressed: () => _registerDevice(nameController.text),
-            child: const Text('Register'),
-          ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   void _showEditDeviceDialog(TrackingDevice device) {
@@ -755,5 +774,270 @@ class _RenteeGpsPageState extends State<RenteeGpsPage>
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class BleDeviceDialog extends StatefulWidget {
+  @override
+  _BleDeviceDialogState createState() => _BleDeviceDialogState();
+}
+
+class _BleDeviceDialogState extends State<BleDeviceDialog> {
+  List<BluetoothDevice> _devices = [];
+  bool _isScanning = false;
+  StreamSubscription<List<ScanResult>>? _scanSubscription;
+  BluetoothDevice? _selectedDevice;
+  BluetoothCharacteristic? _characteristic;
+  String? _deviceName;
+  bool _isConnecting = false;
+
+  // UUIDs from ESP32 code
+  static const String SERVICE_UUID = "12345678-1234-1234-1234-123456789abc";
+  static const String CHARACTERISTIC_UUID =
+      "87654321-4321-4321-4321-cba987654321";
+
+  @override
+  void initState() {
+    super.initState();
+    _startScanning();
+  }
+
+  @override
+  void dispose() {
+    _scanSubscription?.cancel();
+    _selectedDevice?.disconnect();
+    super.dispose();
+  }
+
+  void _startScanning() {
+    setState(() {
+      _isScanning = true;
+      _devices.clear();
+    });
+
+    _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
+      for (ScanResult result in results) {
+        // Filter for ESP32 GPS tracker devices
+        if (result.device.platformName.contains('GPSTRACK') ||
+            result.advertisementData.localName.contains('GPSTRACK')) {
+          if (!_devices.contains(result.device)) {
+            setState(() {
+              _devices.add(result.device);
+            });
+          }
+        }
+      }
+    });
+
+    FlutterBluePlus.startScan(timeout: Duration(seconds: 15));
+
+    Timer(Duration(seconds: 15), () {
+      _stopScanning();
+    });
+  }
+
+  void _stopScanning() {
+    FlutterBluePlus.stopScan();
+    setState(() {
+      _isScanning = false;
+    });
+    _scanSubscription?.cancel();
+  }
+
+  Future<void> _connectToDevice(BluetoothDevice device) async {
+    setState(() {
+      _isConnecting = true;
+      _selectedDevice = device;
+    });
+
+    try {
+      await device.connect();
+
+      // Discover services
+      List<BluetoothService> services = await device.discoverServices();
+
+      for (BluetoothService service in services) {
+        if (service.uuid.toString().toLowerCase() ==
+            SERVICE_UUID.toLowerCase()) {
+          for (BluetoothCharacteristic characteristic
+              in service.characteristics) {
+            if (characteristic.uuid.toString().toLowerCase() ==
+                CHARACTERISTIC_UUID.toLowerCase()) {
+              _characteristic = characteristic;
+              break;
+            }
+          }
+          break;
+        }
+      }
+
+      if (_characteristic != null) {
+        // Request device ID
+        await _characteristic!.write(utf8.encode('GET_ID'));
+
+        // Read the response
+        List<int> value = await _characteristic!.read();
+        _deviceName = utf8.decode(value);
+
+        setState(() {
+          _isConnecting = false;
+        });
+
+        _showRegisterDialog();
+      } else {
+        throw Exception('Could not find required characteristic');
+      }
+    } catch (e) {
+      setState(() {
+        _isConnecting = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to connect: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showRegisterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Register Device'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Device Found:'),
+            SizedBox(height: 8),
+            Text(
+              _deviceName ?? 'Unknown Device',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Text('Do you want to register this device?'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _registerDevice();
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: Text('Register'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _registerDevice() {
+    if (_deviceName != null && _selectedDevice != null) {
+      // Get the parent state to call the registration method
+      final parentState = context
+          .findAncestorStateOfType<_RenteeGpsPageState>();
+      parentState?._registerDeviceWithBLE(_deviceName!, _deviceName!);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.bluetooth_searching),
+          SizedBox(width: 8),
+          Text('Scan for GPS Trackers'),
+        ],
+      ),
+      content: Container(
+        width: double.maxFinite,
+        height: 300,
+        child: Column(
+          children: [
+            if (_isScanning)
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 8),
+                    Text('Scanning for devices...'),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: _devices.isEmpty && !_isScanning
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.bluetooth_disabled,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 8),
+                          Text('No GPS trackers found'),
+                          SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _startScanning,
+                            child: Text('Scan Again'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _devices.length,
+                      itemBuilder: (context, index) {
+                        final device = _devices[index];
+                        return Card(
+                          child: ListTile(
+                            leading: Icon(Icons.gps_fixed),
+                            title: Text(
+                              device.platformName.isNotEmpty
+                                  ? device.platformName
+                                  : 'Unknown Device',
+                            ),
+                            subtitle: Text(device.remoteId.toString()),
+                            trailing: _isConnecting && _selectedDevice == device
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Icon(Icons.arrow_forward_ios),
+                            onTap: _isConnecting
+                                ? null
+                                : () => _connectToDevice(device),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel'),
+        ),
+        if (!_isScanning && _devices.isNotEmpty)
+          ElevatedButton(onPressed: _startScanning, child: Text('Refresh')),
+      ],
+    );
   }
 }
