@@ -5,7 +5,6 @@ import 'package:meadowmiles/models/tracking_device_model.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -268,6 +267,17 @@ class _RenteeGpsPageState extends State<RenteeGpsPage>
                   child: GoogleMap(
                     onMapCreated: (GoogleMapController controller) {
                       _mapController = controller;
+                      // Optionally move camera to current location when available
+                      if (_currentLocation != null) {
+                        _mapController?.animateCamera(
+                          CameraUpdate.newLatLng(
+                            LatLng(
+                              _currentLocation!.latitude!,
+                              _currentLocation!.longitude!,
+                            ),
+                          ),
+                        );
+                      }
                     },
                     initialCameraPosition: CameraPosition(
                       target: _currentLocation != null
@@ -528,7 +538,11 @@ class _RenteeGpsPageState extends State<RenteeGpsPage>
   }
 
   void _showAddDeviceDialog() {
-    showDialog(context: context, builder: (context) => BleDeviceDialog());
+    showDialog(
+      context: context,
+      builder: (context) =>
+          BleDeviceDialog(onDeviceRegistered: _registerDeviceWithBLE),
+    );
   }
 
   Future<void> _registerDeviceWithBLE(
@@ -622,55 +636,6 @@ class _RenteeGpsPageState extends State<RenteeGpsPage>
         ],
       ),
     );
-  }
-
-  Future<void> _registerDevice(String name) async {
-    if (name.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a device name'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final authState = Provider.of<AuthState>(context, listen: false);
-    final userUid = authState.currentUser?.uid;
-
-    if (userUid == null) return;
-
-    try {
-      final device = TrackingDevice(
-        id: '', // Firestore will generate this
-        name: name.trim(),
-        userUid: userUid,
-        registeredAt: DateTime.now(),
-      );
-
-      await FirebaseFirestore.instance
-          .collection('tracking_devices')
-          .add(device.toMap());
-
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Device "${device.name}" registered successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error registering device: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _updateDevice(TrackingDevice device, String name) async {
@@ -778,6 +743,11 @@ class _RenteeGpsPageState extends State<RenteeGpsPage>
 }
 
 class BleDeviceDialog extends StatefulWidget {
+  final Function(String deviceId, String deviceName) onDeviceRegistered;
+
+  const BleDeviceDialog({Key? key, required this.onDeviceRegistered})
+    : super(key: key);
+
   @override
   _BleDeviceDialogState createState() => _BleDeviceDialogState();
 }
@@ -805,25 +775,33 @@ class _BleDeviceDialogState extends State<BleDeviceDialog> {
   @override
   void dispose() {
     _scanSubscription?.cancel();
+    _scanSubscription = null;
+    FlutterBluePlus.stopScan();
     _selectedDevice?.disconnect();
     super.dispose();
   }
 
   void _startScanning() {
+    if (!mounted) return;
+
     setState(() {
       _isScanning = true;
       _devices.clear();
     });
 
     _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
+      if (!mounted) return;
+
       for (ScanResult result in results) {
         // Filter for ESP32 GPS tracker devices
         if (result.device.platformName.contains('GPSTRACK') ||
             result.advertisementData.localName.contains('GPSTRACK')) {
           if (!_devices.contains(result.device)) {
-            setState(() {
-              _devices.add(result.device);
-            });
+            if (mounted) {
+              setState(() {
+                _devices.add(result.device);
+              });
+            }
           }
         }
       }
@@ -832,19 +810,25 @@ class _BleDeviceDialogState extends State<BleDeviceDialog> {
     FlutterBluePlus.startScan(timeout: Duration(seconds: 15));
 
     Timer(Duration(seconds: 15), () {
-      _stopScanning();
+      if (mounted) {
+        _stopScanning();
+      }
     });
   }
 
   void _stopScanning() {
     FlutterBluePlus.stopScan();
-    setState(() {
-      _isScanning = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isScanning = false;
+      });
+    }
     _scanSubscription?.cancel();
   }
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
+    if (!mounted) return;
+
     setState(() {
       _isConnecting = true;
       _selectedDevice = device;
@@ -879,25 +863,29 @@ class _BleDeviceDialogState extends State<BleDeviceDialog> {
         List<int> value = await _characteristic!.read();
         _deviceName = utf8.decode(value);
 
-        setState(() {
-          _isConnecting = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isConnecting = false;
+          });
 
-        _showRegisterDialog();
+          _showRegisterDialog();
+        }
       } else {
         throw Exception('Could not find required characteristic');
       }
     } catch (e) {
-      setState(() {
-        _isConnecting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isConnecting = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to connect: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to connect: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -943,10 +931,8 @@ class _BleDeviceDialogState extends State<BleDeviceDialog> {
 
   void _registerDevice() {
     if (_deviceName != null && _selectedDevice != null) {
-      // Get the parent state to call the registration method
-      final parentState = context
-          .findAncestorStateOfType<_RenteeGpsPageState>();
-      parentState?._registerDeviceWithBLE(_deviceName!, _deviceName!);
+      // Use the callback function passed from the parent
+      widget.onDeviceRegistered(_deviceName!, _deviceName!);
     }
   }
 
