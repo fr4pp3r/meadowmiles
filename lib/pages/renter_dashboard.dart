@@ -4,6 +4,9 @@ import 'package:meadowmiles/pages/renter/renterbook_tab.dart';
 import 'package:meadowmiles/pages/renter/renterhistory_tab.dart';
 import 'package:meadowmiles/pages/renter_gps_part.dart';
 import 'package:meadowmiles/states/authstate.dart';
+import 'package:meadowmiles/states/appstate.dart';
+import 'package:meadowmiles/states/renter_gps_state.dart';
+import 'package:meadowmiles/states/location_state.dart';
 import 'package:provider/provider.dart';
 
 class RenterDashboardPage extends StatelessWidget {
@@ -60,6 +63,65 @@ class _RenterDashboardContentState extends State<_RenterDashboardContent> {
     RenterHistoryTab(),
     RenterGpsPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Start GPS state management when entering renter dashboard
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+      final appState = Provider.of<AppState>(context, listen: false);
+      final locationState = Provider.of<LocationState>(context, listen: false);
+
+      appState.setActiveDashboard('renter');
+      renterGpsState.startRenterGpsSession();
+
+      // Sync with any existing device connection from LocationState
+      renterGpsState.syncWithLocationState(
+        locationState.connectedDeviceId,
+        locationState.connectedDeviceName,
+      );
+
+      // Set up location listener for database updates across all tabs
+      locationState.addListener(_onLocationUpdate);
+    });
+  }
+
+  void _onLocationUpdate() {
+    if (!mounted) return;
+
+    final locationState = Provider.of<LocationState>(context, listen: false);
+    final renterGpsState = Provider.of<RenterGpsState>(context, listen: false);
+
+    // Send location data to renter GPS state for database updates
+    if (locationState.hasConnectedDevice &&
+        locationState.currentLocation != null &&
+        renterGpsState.hasConnectedDevice) {
+      renterGpsState.updateDeviceLocation(locationState.currentLocation!);
+    }
+  }
+
+  @override
+  void dispose() {
+    // Stop GPS state management when leaving renter dashboard
+    try {
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+      renterGpsState.stopRenterGpsSession();
+
+      final locationState = Provider.of<LocationState>(context, listen: false);
+      locationState.removeListener(_onLocationUpdate);
+    } catch (e) {
+      // Handle potential provider access issues during dispose
+      debugPrint('Error stopping GPS session: $e');
+    }
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {

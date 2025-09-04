@@ -16,7 +16,7 @@ class TrackingDevice {
     required this.name,
     required this.userUid,
     required this.registeredAt,
-    this.isActive = true,
+    this.isActive = false,
     this.lastLatitude,
     this.lastLongitude,
     this.lastLocationUpdate,

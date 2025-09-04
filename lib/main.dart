@@ -14,6 +14,7 @@ import 'package:meadowmiles/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
+import 'package:meadowmiles/states/renter_gps_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AppState()),
         ChangeNotifierProvider(create: (_) => AuthState()),
         ChangeNotifierProvider(create: (_) => LocationState()),
+        ChangeNotifierProvider(create: (_) => RenterGpsState()),
       ],
       child: const MyApp(),
     ),

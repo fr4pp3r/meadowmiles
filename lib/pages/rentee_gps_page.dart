@@ -157,7 +157,6 @@ class _RenteeGpsPageState extends State<RenteeGpsPage>
       final snapshot = await FirebaseFirestore.instance
           .collection('tracking_devices')
           .where('userUid', isEqualTo: userUid)
-          .where('isActive', isEqualTo: true)
           .get();
 
       for (var doc in snapshot.docs) {

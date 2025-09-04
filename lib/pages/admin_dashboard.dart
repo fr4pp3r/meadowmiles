@@ -3,7 +3,8 @@ import 'package:meadowmiles/pages/admin/admin_users_tab.dart';
 import 'package:meadowmiles/pages/admin/admin_support_tab.dart';
 import 'package:meadowmiles/pages/admin/admin_data_tab.dart';
 import 'package:meadowmiles/pages/admin/admin_settings_page.dart';
-import 'package:meadowmiles/states/authstate.dart';
+import 'package:meadowmiles/states/appstate.dart';
+import 'package:meadowmiles/states/renter_gps_state.dart';
 import 'package:provider/provider.dart';
 
 class AdminDashboardPage extends StatefulWidget {
@@ -22,6 +23,43 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     const AdminDataTab(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Set dashboard to admin when entering
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+
+      appState.setActiveDashboard('admin');
+
+      // Stop any renter GPS session that might be active
+      if (renterGpsState.isActive) {
+        renterGpsState.stopRenterGpsSession();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Clean up when leaving admin dashboard
+    try {
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+      if (renterGpsState.isActive) {
+        renterGpsState.stopRenterGpsSession();
+      }
+    } catch (e) {
+      debugPrint('Error stopping GPS session: $e');
+    }
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -30,8 +68,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = Provider.of<AuthState>(context, listen: false);
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {

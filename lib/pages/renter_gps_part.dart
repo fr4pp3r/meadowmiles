@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:meadowmiles/states/location_state.dart';
+import 'package:meadowmiles/states/renter_gps_state.dart';
+import 'package:meadowmiles/states/appstate.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -19,101 +21,250 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
   String? _deviceName;
   String? _deviceId;
   DateTime? _lastConnectionTime;
+  BluetoothDevice? _connectedBleDevice; // Track the actual BLE device
+
+  // Reconnection management
+  bool _autoReconnectEnabled = true;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 3;
+  Timer? _reconnectTimer;
+  StreamSubscription<BluetoothConnectionState>? _connectionStateSubscription;
 
   @override
   void initState() {
     super.initState();
     _checkDeviceStatus();
-    _setupLocationListener();
+    _setupDashboardListener();
   }
 
-  void _setupLocationListener() {
-    // Listen to location updates from LocationState and update database
+  void _setupDashboardListener() {
+    // Listen for dashboard changes and disconnect device if needed
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return; // Check if widget is still mounted
+      if (!mounted) return;
 
-      final locationState = Provider.of<LocationState>(context, listen: false);
-      locationState.addListener(_onLocationUpdate);
+      final appState = Provider.of<AppState>(context, listen: false);
+      appState.addListener(_onDashboardChange);
     });
   }
 
-  void _onLocationUpdate() {
-    if (!mounted) return; // Check if widget is still mounted
+  void _onDashboardChange() {
+    if (!mounted) return;
 
-    final locationState = Provider.of<LocationState>(context, listen: false);
-    if (locationState.hasConnectedDevice &&
-        locationState.currentLocation != null) {
-      _updateDeviceLocationInDatabase(locationState.currentLocation!);
-    }
-  }
+    final appState = Provider.of<AppState>(context, listen: false);
 
-  Future<void> _updateDeviceLocationInDatabase(dynamic location) async {
-    if (!mounted ||
-        _deviceId == null ||
-        location.latitude == null ||
-        location.longitude == null) {
-      return;
-    }
-
-    try {
-      // Find the device document by deviceId and update its location
-      final deviceQuery = await FirebaseFirestore.instance
-          .collection('tracking_devices')
-          .where('id', isEqualTo: _deviceId)
-          .limit(1)
-          .get();
-
-      if (deviceQuery.docs.isNotEmpty) {
-        final deviceDoc = deviceQuery.docs.first;
-        await deviceDoc.reference.update({
-          'lastLatitude': location.latitude,
-          'lastLongitude': location.longitude,
-          'lastLocationUpdate': Timestamp.now(),
-        });
-      }
-    } catch (e) {
-      print('Error updating device location in database: $e');
+    // If dashboard is no longer renter, disconnect device
+    if (appState.activeDashboard != 'renter' && _isConnected) {
+      _disconnectDevice();
     }
   }
 
   @override
   void dispose() {
+    // Cancel reconnection timer
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
+    // Cancel connection state subscription
+    _connectionStateSubscription?.cancel();
+    _connectionStateSubscription = null;
+
+    // Disconnect BLE device if connected
+    if (_connectedBleDevice != null) {
+      _connectedBleDevice!.disconnect().catchError((e) {
+        print('Error disconnecting BLE device during dispose: $e');
+      });
+    }
+
     try {
       if (mounted) {
-        final locationState = Provider.of<LocationState>(
-          context,
-          listen: false,
-        );
-        locationState.removeListener(_onLocationUpdate);
+        final appState = Provider.of<AppState>(context, listen: false);
+        appState.removeListener(_onDashboardChange);
       }
     } catch (e) {
       // Handle potential provider access issues during dispose
-      print('Error removing location listener: $e');
+      print('Error removing listeners: $e');
     }
     super.dispose();
   }
 
   Future<void> _checkDeviceStatus() async {
     try {
-      // Check if there are any active GPS tracking devices
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tracking_devices')
-          .where('isActive', isEqualTo: true)
-          .limit(1)
-          .get();
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+      final activeDevice = await renterGpsState.checkActiveDevice();
 
-      if (snapshot.docs.isNotEmpty && mounted) {
-        final deviceData = snapshot.docs.first.data();
-        setState(() {
-          _isConnected = true;
-          _deviceName = deviceData['name'];
-          _deviceId = deviceData['id'] ?? snapshot.docs.first.id;
-          _lastConnectionTime =
-              DateTime.now(); // Set to current time when found active
-        });
+      if (activeDevice != null && mounted) {
+        // Check if we have a real BLE connection
+        if (_connectedBleDevice != null) {
+          final connectionState =
+              await _connectedBleDevice!.connectionState.first;
+          if (connectionState == BluetoothConnectionState.connected) {
+            setState(() {
+              _isConnected = true;
+              _deviceName = activeDevice['name'];
+              _deviceId = activeDevice['id'];
+              _lastConnectionTime = DateTime.now();
+            });
+          } else {
+            // Device is marked as active but not actually connected
+            _handleDisconnectedDevice();
+          }
+        } else {
+          // Device is marked as active but we have no BLE reference
+          setState(() {
+            _isConnected = false;
+            _deviceName = null;
+            _deviceId = null;
+            _lastConnectionTime = null;
+          });
+          // Clear the active status since there's no real connection
+          renterGpsState.clearConnectedDevice();
+        }
       }
     } catch (e) {
       print('Error checking device status: $e');
+    }
+  }
+
+  void _handleDisconnectedDevice() {
+    setState(() {
+      _isConnected = false;
+      _deviceName = null;
+      _deviceId = null;
+      _lastConnectionTime = null;
+      _connectedBleDevice = null;
+    });
+
+    // Clear device from states
+    final renterGpsState = Provider.of<RenterGpsState>(context, listen: false);
+    final locationState = Provider.of<LocationState>(context, listen: false);
+    renterGpsState.clearConnectedDevice();
+    locationState.clearConnectedDevice();
+  }
+
+  void _handleUnexpectedDisconnection() {
+    print('Handling unexpected BLE disconnection...');
+
+    // Update UI immediately
+    setState(() {
+      _isConnected = false;
+    });
+
+    // Show notification
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'GPS device disconnected. ${_autoReconnectEnabled ? "Attempting to reconnect..." : ""}',
+          ),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+
+    // Attempt automatic reconnection if enabled
+    if (_autoReconnectEnabled && _reconnectAttempts < _maxReconnectAttempts) {
+      _attemptReconnection();
+    } else {
+      // Give up reconnecting and clear everything
+      _handleDisconnectedDevice();
+      _reconnectAttempts = 0;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to reconnect to GPS device. Please reconnect manually.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _attemptReconnection() async {
+    if (_connectedBleDevice == null || !mounted) return;
+
+    _reconnectAttempts++;
+    print('Reconnection attempt $_reconnectAttempts/$_maxReconnectAttempts');
+
+    setState(() {
+      _isConnecting = true;
+    });
+
+    try {
+      // Wait a bit before attempting reconnection
+      await Future.delayed(Duration(seconds: 2));
+
+      if (!mounted) return;
+
+      // Try to reconnect
+      await _connectedBleDevice!.connect();
+
+      // If successful, reset attempts and update UI
+      _reconnectAttempts = 0;
+      setState(() {
+        _isConnected = true;
+        _isConnecting = false;
+        _lastConnectionTime = DateTime.now();
+      });
+
+      // Restore device states
+      final locationState = Provider.of<LocationState>(context, listen: false);
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+
+      if (_deviceId != null && _deviceName != null) {
+        locationState.setConnectedDevice(_deviceId!, _deviceName!);
+        renterGpsState.setConnectedDevice(_deviceId!, _deviceName!);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('GPS device reconnected successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Reconnection attempt failed: $e');
+      setState(() {
+        _isConnecting = false;
+      });
+
+      if (_reconnectAttempts < _maxReconnectAttempts) {
+        // Schedule next attempt
+        _reconnectTimer = Timer(Duration(seconds: 5), () {
+          if (mounted && _autoReconnectEnabled) {
+            _attemptReconnection();
+          }
+        });
+      } else {
+        // All attempts failed
+        _handleDisconnectedDevice();
+        _reconnectAttempts = 0;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Failed to reconnect to GPS device after multiple attempts.',
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -124,21 +275,36 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
 
   Future<void> _disconnectDevice() async {
     try {
-      // Only update the specific connected device to inactive
-      if (_deviceId != null) {
-        final deviceQuery = await FirebaseFirestore.instance
-            .collection('tracking_devices')
-            .where('id', isEqualTo: _deviceId)
-            .limit(1)
-            .get();
+      // Disable auto-reconnection for manual disconnection
+      _autoReconnectEnabled = false;
+      _reconnectAttempts = 0;
 
-        if (deviceQuery.docs.isNotEmpty) {
-          await deviceQuery.docs.first.reference.update({'isActive': false});
+      // Cancel any pending reconnection attempts
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+
+      // Cancel connection state subscription
+      _connectionStateSubscription?.cancel();
+      _connectionStateSubscription = null;
+
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+      final locationState = Provider.of<LocationState>(context, listen: false);
+
+      // Disconnect the actual BLE device if connected
+      if (_connectedBleDevice != null) {
+        try {
+          await _connectedBleDevice!.disconnect();
+          _connectedBleDevice = null;
+        } catch (e) {
+          print('Error disconnecting BLE device: $e');
         }
       }
 
-      // Stop location tracking when disconnecting
-      final locationState = Provider.of<LocationState>(context, listen: false);
+      // Clear device from both states
+      renterGpsState.clearConnectedDevice();
       locationState.clearConnectedDevice();
 
       if (mounted) {
@@ -156,6 +322,9 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
           ),
         );
       }
+
+      // Re-enable auto-reconnection for future connections
+      _autoReconnectEnabled = true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -176,7 +345,11 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
     );
   }
 
-  Future<void> _onDeviceConnected(String deviceId, String deviceName) async {
+  Future<void> _onDeviceConnected(
+    String deviceId,
+    String deviceName,
+    BluetoothDevice? bleDevice,
+  ) async {
     try {
       // Look for existing device in tracking_devices collection by deviceID only
       final deviceQuery = await FirebaseFirestore.instance
@@ -186,24 +359,47 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
           .get();
 
       if (deviceQuery.docs.isNotEmpty) {
-        // Device exists, update its connection status
-        final deviceDoc = deviceQuery.docs.first;
-        await deviceDoc.reference.update({'isActive': true});
-
         if (mounted) {
+          // Reset reconnection state for new connection
+          _reconnectAttempts = 0;
+          _autoReconnectEnabled = true;
+
           setState(() {
             _isConnected = true;
             _deviceName = deviceName;
             _deviceId = deviceId;
             _lastConnectionTime = DateTime.now();
+            _connectedBleDevice = bleDevice; // Store the BLE device reference
           });
 
-          // Start location tracking after device is connected
+          // Set up connection state listener for the BLE device
+          if (bleDevice != null) {
+            _connectionStateSubscription
+                ?.cancel(); // Cancel any existing subscription
+            _connectionStateSubscription = bleDevice.connectionState.listen((
+              BluetoothConnectionState state,
+            ) {
+              if (state == BluetoothConnectionState.disconnected &&
+                  mounted &&
+                  _isConnected) {
+                print('BLE device disconnected unexpectedly');
+                _handleUnexpectedDisconnection();
+              }
+            });
+          }
+
+          // Set connected device in both states
           final locationState = Provider.of<LocationState>(
             context,
             listen: false,
           );
+          final renterGpsState = Provider.of<RenterGpsState>(
+            context,
+            listen: false,
+          );
+
           locationState.setConnectedDevice(deviceId, deviceName);
+          renterGpsState.setConnectedDevice(deviceId, deviceName);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -324,24 +520,42 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
                 shape: BoxShape.circle,
                 color: _isConnected
                     ? Colors.green.withOpacity(0.1)
+                    : _isConnecting
+                    ? Colors.orange.withOpacity(0.1)
                     : Colors.red.withOpacity(0.1),
               ),
-              child: Icon(
-                _isConnected
-                    ? Icons.bluetooth_connected
-                    : Icons.bluetooth_disabled,
-                size: 48,
-                color: _isConnected ? Colors.green : Colors.red,
-              ),
+              child: _isConnecting
+                  ? const SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: CircularProgressIndicator(strokeWidth: 3),
+                    )
+                  : Icon(
+                      _isConnected
+                          ? Icons.bluetooth_connected
+                          : Icons.bluetooth_disabled,
+                      size: 48,
+                      color: _isConnected ? Colors.green : Colors.red,
+                    ),
             ),
             const SizedBox(height: 16),
 
             // Status Text
             Text(
-              _isConnected ? 'Device Connected' : 'No Device Connected',
+              _isConnected
+                  ? 'Device Connected'
+                  : _isConnecting
+                  ? (_reconnectAttempts > 0
+                        ? 'Reconnecting...'
+                        : 'Connecting...')
+                  : 'No Device Connected',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: _isConnected ? Colors.green : Colors.red,
+                color: _isConnected
+                    ? Colors.green
+                    : _isConnecting
+                    ? Colors.orange
+                    : Colors.red,
               ),
             ),
             const SizedBox(height: 8),
@@ -349,6 +563,10 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
             Text(
               _isConnected
                   ? 'Your ESP32 GPS tracker is connected and ready'
+                  : _isConnecting
+                  ? (_reconnectAttempts > 0
+                        ? 'Attempting to reconnect to your GPS tracker...'
+                        : 'Connecting to your ESP32 GPS tracker...')
                   : 'Connect your ESP32 GPS tracker to start tracking',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -452,6 +670,51 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
                 );
               },
             ),
+            const SizedBox(height: 8),
+            // Auto-reconnect setting
+            Row(
+              children: [
+                Text(
+                  'Auto-reconnect',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Icon(
+                      _autoReconnectEnabled
+                          ? Icons.autorenew
+                          : Icons.sync_disabled,
+                      size: 16,
+                      color: _autoReconnectEnabled ? Colors.green : Colors.grey,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _autoReconnectEnabled ? 'Enabled' : 'Disabled',
+                      style: TextStyle(
+                        color: _autoReconnectEnabled
+                            ? Colors.green
+                            : Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Switch(
+                      value: _autoReconnectEnabled,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _autoReconnectEnabled = value;
+                        });
+                      },
+                      activeColor: Colors.green,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -544,6 +807,26 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
   }
 
   Widget _buildConnectionButton() {
+    String buttonText;
+    IconData buttonIcon;
+    Color backgroundColor;
+
+    if (_isConnecting) {
+      buttonText = _reconnectAttempts > 0
+          ? 'Reconnecting... (${_reconnectAttempts}/$_maxReconnectAttempts)'
+          : 'Connecting...';
+      buttonIcon = Icons.bluetooth_searching;
+      backgroundColor = Colors.orange;
+    } else if (_isConnected) {
+      buttonText = 'Disconnect Device';
+      buttonIcon = Icons.bluetooth_disabled;
+      backgroundColor = Colors.red;
+    } else {
+      buttonText = 'Connect Device';
+      buttonIcon = Icons.bluetooth;
+      backgroundColor = Colors.blue;
+    }
+
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -557,14 +840,10 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : Icon(_isConnected ? Icons.bluetooth_disabled : Icons.bluetooth),
-        label: Text(
-          _isConnecting
-              ? 'Connecting...'
-              : (_isConnected ? 'Disconnect Device' : 'Connect Device'),
-        ),
+            : Icon(buttonIcon),
+        label: Text(buttonText),
         style: ElevatedButton.styleFrom(
-          backgroundColor: _isConnected ? Colors.red : Colors.blue,
+          backgroundColor: backgroundColor,
           foregroundColor: Colors.white,
         ),
       ),
@@ -670,7 +949,8 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
 }
 
 class BleDeviceDialog extends StatefulWidget {
-  final Function(String deviceId, String deviceName) onDeviceConnected;
+  final Function(String deviceId, String deviceName, BluetoothDevice? bleDevice)
+  onDeviceConnected;
 
   const BleDeviceDialog({Key? key, required this.onDeviceConnected})
     : super(key: key);
@@ -863,10 +1143,11 @@ class _BleDeviceDialogState extends State<BleDeviceDialog> {
   void _connectDevice() {
     if (_deviceId != null && _selectedDevice != null) {
       // Use the callback function passed from the parent
-      // Pass the device ID obtained from ESP32 and display name
+      // Pass the device ID obtained from ESP32, display name, and BLE device
       widget.onDeviceConnected(
         _deviceId!,
         _deviceDisplayName ?? 'ESP32 GPS Tracker',
+        _selectedDevice, // Pass the actual BLE device
       );
     }
   }

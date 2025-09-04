@@ -92,7 +92,7 @@ class _ProfilePageState extends State<ProfilePage> {
       } else if (_userModel!.userType == UserModelType.rentee &&
           appState.activeDashboard == 'renter') {
         // Perform actions specific to rentees
-        appState.activeDashboard = 'rentee';
+        appState.setActiveDashboard('rentee');
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/rentee_dashboard',
@@ -101,7 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
       } else if (_userModel!.userType == UserModelType.rentee &&
           appState.activeDashboard == 'rentee') {
         // Perform actions specific to rentees
-        appState.activeDashboard = 'renter';
+        appState.setActiveDashboard('renter');
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/renter_dashboard',
@@ -191,7 +191,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).pop(true);
-                        appState.activeDashboard = 'renter';
+                        appState.setActiveDashboard('renter');
                       },
                       child: const Text('Sign Out'),
                     ),
