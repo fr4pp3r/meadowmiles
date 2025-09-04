@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:meadowmiles/states/authstate.dart';
+import 'package:meadowmiles/states/location_state.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:location/location.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -20,37 +19,83 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
   String? _deviceName;
   String? _deviceId;
   DateTime? _lastConnectionTime;
-  double? _lastLatitude;
-  double? _lastLongitude;
-  DateTime? _lastLocationUpdate;
-
-  // Location tracking variables
-  Location? _location;
-  StreamSubscription<LocationData>? _locationSubscription;
-  bool _isLocationTracking = false;
-  LocationData? _currentLocation;
 
   @override
   void initState() {
     super.initState();
     _checkDeviceStatus();
-    _initializeLocation();
+    _setupLocationListener();
+  }
+
+  void _setupLocationListener() {
+    // Listen to location updates from LocationState and update database
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return; // Check if widget is still mounted
+
+      final locationState = Provider.of<LocationState>(context, listen: false);
+      locationState.addListener(_onLocationUpdate);
+    });
+  }
+
+  void _onLocationUpdate() {
+    if (!mounted) return; // Check if widget is still mounted
+
+    final locationState = Provider.of<LocationState>(context, listen: false);
+    if (locationState.hasConnectedDevice &&
+        locationState.currentLocation != null) {
+      _updateDeviceLocationInDatabase(locationState.currentLocation!);
+    }
+  }
+
+  Future<void> _updateDeviceLocationInDatabase(dynamic location) async {
+    if (!mounted ||
+        _deviceId == null ||
+        location.latitude == null ||
+        location.longitude == null) {
+      return;
+    }
+
+    try {
+      // Find the device document by deviceId and update its location
+      final deviceQuery = await FirebaseFirestore.instance
+          .collection('tracking_devices')
+          .where('id', isEqualTo: _deviceId)
+          .limit(1)
+          .get();
+
+      if (deviceQuery.docs.isNotEmpty) {
+        final deviceDoc = deviceQuery.docs.first;
+        await deviceDoc.reference.update({
+          'lastLatitude': location.latitude,
+          'lastLongitude': location.longitude,
+          'lastLocationUpdate': Timestamp.now(),
+        });
+      }
+    } catch (e) {
+      print('Error updating device location in database: $e');
+    }
   }
 
   @override
   void dispose() {
-    _locationSubscription?.cancel();
+    try {
+      if (mounted) {
+        final locationState = Provider.of<LocationState>(
+          context,
+          listen: false,
+        );
+        locationState.removeListener(_onLocationUpdate);
+      }
+    } catch (e) {
+      // Handle potential provider access issues during dispose
+      print('Error removing location listener: $e');
+    }
     super.dispose();
   }
 
   Future<void> _checkDeviceStatus() async {
-    final authState = Provider.of<AuthState>(context, listen: false);
-    final userUid = authState.currentUser?.uid;
-
-    if (userUid == null) return;
-
     try {
-      // Check if user has any active GPS tracking devices
+      // Check if there are any active GPS tracking devices
       final snapshot = await FirebaseFirestore.instance
           .collection('tracking_devices')
           .where('isActive', isEqualTo: true)
@@ -63,14 +108,8 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
           _isConnected = true;
           _deviceName = deviceData['name'];
           _deviceId = deviceData['id'] ?? snapshot.docs.first.id;
-          _lastConnectionTime = deviceData['lastConnectionTime'] != null
-              ? (deviceData['lastConnectionTime'] as Timestamp).toDate()
-              : null;
-          _lastLatitude = deviceData['lastLatitude']?.toDouble();
-          _lastLongitude = deviceData['lastLongitude']?.toDouble();
-          _lastLocationUpdate = deviceData['lastLocationUpdate'] != null
-              ? (deviceData['lastLocationUpdate'] as Timestamp).toDate()
-              : null;
+          _lastConnectionTime =
+              DateTime.now(); // Set to current time when found active
         });
       }
     } catch (e) {
@@ -84,30 +123,23 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
   }
 
   Future<void> _disconnectDevice() async {
-    final authState = Provider.of<AuthState>(context, listen: false);
-    final userUid = authState.currentUser?.uid;
-
-    if (userUid == null) return;
-
     try {
-      // Update all active devices for this user to inactive
-      final batch = FirebaseFirestore.instance.batch();
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tracking_devices')
-          .where('isActive', isEqualTo: true)
-          .get();
+      // Only update the specific connected device to inactive
+      if (_deviceId != null) {
+        final deviceQuery = await FirebaseFirestore.instance
+            .collection('tracking_devices')
+            .where('id', isEqualTo: _deviceId)
+            .limit(1)
+            .get();
 
-      for (var doc in snapshot.docs) {
-        batch.update(doc.reference, {
-          'isActive': false,
-          'disconnectionTime': Timestamp.now(),
-        });
+        if (deviceQuery.docs.isNotEmpty) {
+          await deviceQuery.docs.first.reference.update({'isActive': false});
+        }
       }
 
-      await batch.commit();
-
       // Stop location tracking when disconnecting
-      _stopLocationTracking();
+      final locationState = Provider.of<LocationState>(context, listen: false);
+      locationState.clearConnectedDevice();
 
       if (mounted) {
         setState(() {
@@ -115,9 +147,6 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
           _deviceName = null;
           _deviceId = null;
           _lastConnectionTime = null;
-          _lastLatitude = null;
-          _lastLongitude = null;
-          _lastLocationUpdate = null;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,124 +168,6 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
     }
   }
 
-  Future<void> _initializeLocation() async {
-    try {
-      _location = Location();
-      await _requestLocationPermission();
-    } catch (e) {
-      print('Error initializing location: $e');
-    }
-  }
-
-  Future<void> _requestLocationPermission() async {
-    try {
-      bool serviceEnabled = await _location!.serviceEnabled();
-      if (!serviceEnabled) {
-        serviceEnabled = await _location!.requestService();
-        if (!serviceEnabled) {
-          throw Exception('Location service is not enabled');
-        }
-      }
-
-      PermissionStatus permissionGranted = await _location!.hasPermission();
-      if (permissionGranted == PermissionStatus.denied) {
-        permissionGranted = await _location!.requestPermission();
-        if (permissionGranted != PermissionStatus.granted) {
-          throw Exception('Location permission not granted');
-        }
-      }
-    } catch (e) {
-      print('Error requesting location permission: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> _startLocationTracking() async {
-    if (_location == null || !_isConnected || _deviceId == null) return;
-
-    try {
-      setState(() {
-        _isLocationTracking = true;
-      });
-
-      _locationSubscription = _location!.onLocationChanged.listen(
-        (LocationData currentLocation) {
-          if (mounted) {
-            setState(() {
-              _currentLocation = currentLocation;
-              _lastLatitude = currentLocation.latitude;
-              _lastLongitude = currentLocation.longitude;
-              _lastLocationUpdate = DateTime.now();
-            });
-            _updateDeviceLocation(currentLocation);
-          }
-        },
-        onError: (error) {
-          print('Location tracking error: $error');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Location tracking error: $error'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-      );
-    } catch (e) {
-      print('Error starting location tracking: $e');
-      if (mounted) {
-        setState(() {
-          _isLocationTracking = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _stopLocationTracking() async {
-    _locationSubscription?.cancel();
-    _locationSubscription = null;
-    setState(() {
-      _isLocationTracking = false;
-    });
-  }
-
-  Future<void> _updateDeviceLocation(LocationData location) async {
-    if (_deviceId == null ||
-        location.latitude == null ||
-        location.longitude == null)
-      return;
-
-    final authState = Provider.of<AuthState>(context, listen: false);
-    final userUid = authState.currentUser?.uid;
-
-    if (userUid == null) return;
-
-    try {
-      // Find the device document and update its location
-      final deviceQuery = await FirebaseFirestore.instance
-          .collection('tracking_devices')
-          .where('userUid', isEqualTo: userUid)
-          .where('id', isEqualTo: _deviceId)
-          .limit(1)
-          .get();
-
-      if (deviceQuery.docs.isNotEmpty) {
-        final deviceDoc = deviceQuery.docs.first;
-        await deviceDoc.reference.update({
-          'lastLatitude': location.latitude,
-          'lastLongitude': location.longitude,
-          'lastLocationUpdate': Timestamp.now(),
-          'accuracy': location.accuracy,
-          'altitude': location.altitude,
-          'speed': location.speed,
-        });
-      }
-    } catch (e) {
-      print('Error updating device location: $e');
-    }
-  }
-
   void _showBleDeviceDialog() {
     showDialog(
       context: context,
@@ -266,30 +177,18 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
   }
 
   Future<void> _onDeviceConnected(String deviceId, String deviceName) async {
-    final authState = Provider.of<AuthState>(context, listen: false);
-    final userUid = authState.currentUser?.uid;
-
-    if (userUid == null) return;
-
     try {
-      // Look for existing device in tracking_devices collection
+      // Look for existing device in tracking_devices collection by deviceID only
       final deviceQuery = await FirebaseFirestore.instance
           .collection('tracking_devices')
-          .where('userUid', isEqualTo: userUid)
           .where('id', isEqualTo: deviceId)
           .limit(1)
           .get();
 
       if (deviceQuery.docs.isNotEmpty) {
-        // Device exists, update its connection status and last connection time
+        // Device exists, update its connection status
         final deviceDoc = deviceQuery.docs.first;
-        await deviceDoc.reference.update({
-          'isActive': true,
-          'lastConnectionTime': Timestamp.now(),
-          'connectionType': 'BLE',
-          'firmwareVersion': '1.0.0',
-          'batteryLevel': 85,
-        });
+        await deviceDoc.reference.update({'isActive': true});
 
         if (mounted) {
           setState(() {
@@ -300,7 +199,11 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
           });
 
           // Start location tracking after device is connected
-          _startLocationTracking();
+          final locationState = Provider.of<LocationState>(
+            context,
+            listen: false,
+          );
+          locationState.setConnectedDevice(deviceId, deviceName);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -380,12 +283,19 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
               ],
 
               // Location Data Card (if available)
-              if (_isConnected &&
-                  _lastLatitude != null &&
-                  _lastLongitude != null) ...[
-                _buildLocationCard(),
-                const SizedBox(height: 24),
-              ],
+              Consumer<LocationState>(
+                builder: (context, locationState, child) {
+                  if (_isConnected && locationState.currentLocation != null) {
+                    return Column(
+                      children: [
+                        _buildLocationCard(),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
 
               // Connection Button
               _buildConnectionButton(),
@@ -477,7 +387,7 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
             _buildInfoRow('Device ID', _deviceId ?? 'Unknown'),
             const SizedBox(height: 8),
             _buildInfoRow(
-              'Connected At',
+              'Session Started',
               _lastConnectionTime != null
                   ? _formatDateTime(_lastConnectionTime!)
                   : 'Unknown',
@@ -485,52 +395,62 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
             const SizedBox(height: 8),
             _buildInfoRow('Connection Type', 'Bluetooth LE'),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  'Location Tracking',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                ),
-                const Spacer(),
-                Row(
+            Consumer<LocationState>(
+              builder: (context, locationState, child) {
+                return Row(
                   children: [
-                    Icon(
-                      _isLocationTracking
-                          ? Icons.location_on
-                          : Icons.location_off,
-                      size: 16,
-                      color: _isLocationTracking ? Colors.green : Colors.grey,
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      _isLocationTracking ? 'Active' : 'Inactive',
-                      style: TextStyle(
-                        color: _isLocationTracking ? Colors.green : Colors.grey,
-                        fontSize: 14,
+                      'Location Tracking',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: _isLocationTracking
-                          ? _stopLocationTracking
-                          : _startLocationTracking,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(60, 30),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Icon(
+                          locationState.isLocationTracking
+                              ? Icons.location_on
+                              : Icons.location_off,
+                          size: 16,
+                          color: locationState.isLocationTracking
+                              ? Colors.green
+                              : Colors.grey,
                         ),
-                      ),
-                      child: Text(
-                        _isLocationTracking ? 'Stop' : 'Start',
-                        style: const TextStyle(fontSize: 12),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          locationState.isLocationTracking
+                              ? 'Active'
+                              : 'Inactive',
+                          style: TextStyle(
+                            color: locationState.isLocationTracking
+                                ? Colors.green
+                                : Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: locationState.isLocationTracking
+                              ? locationState.stopLocationTracking
+                              : locationState.startLocationTracking,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(60, 30),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                          ),
+                          child: Text(
+                            locationState.isLocationTracking ? 'Stop' : 'Start',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
           ],
         ),
@@ -559,45 +479,64 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
             ),
             const SizedBox(height: 16),
 
-            _buildInfoRow(
-              'Latitude',
-              _lastLatitude?.toStringAsFixed(6) ?? '--',
+            Consumer<LocationState>(
+              builder: (context, locationState, child) {
+                final currentLocation = locationState.currentLocation;
+                return Column(
+                  children: [
+                    _buildInfoRow(
+                      'Latitude',
+                      currentLocation?.latitude?.toStringAsFixed(6) ?? '--',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      'Longitude',
+                      currentLocation?.longitude?.toStringAsFixed(6) ?? '--',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      'Last Update',
+                      currentLocation != null
+                          ? _formatDateTime(DateTime.now())
+                          : 'No data received',
+                    ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 8),
-            _buildInfoRow(
-              'Longitude',
-              _lastLongitude?.toStringAsFixed(6) ?? '--',
+            Consumer<LocationState>(
+              builder: (context, locationState, child) {
+                final currentLocation = locationState.currentLocation;
+                if (currentLocation != null) {
+                  return Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildInfoRow(
+                        'Accuracy',
+                        currentLocation.accuracy != null
+                            ? '${currentLocation.accuracy!.toStringAsFixed(1)}m'
+                            : '--',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow(
+                        'Altitude',
+                        currentLocation.altitude != null
+                            ? '${currentLocation.altitude!.toStringAsFixed(1)}m'
+                            : '--',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow(
+                        'Speed',
+                        currentLocation.speed != null
+                            ? '${(currentLocation.speed! * 3.6).toStringAsFixed(1)} km/h'
+                            : '--',
+                      ),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
             ),
-            const SizedBox(height: 8),
-            _buildInfoRow(
-              'Last Update',
-              _lastLocationUpdate != null
-                  ? _formatDateTime(_lastLocationUpdate!)
-                  : 'No data received',
-            ),
-            if (_currentLocation != null) ...[
-              const SizedBox(height: 8),
-              _buildInfoRow(
-                'Accuracy',
-                _currentLocation!.accuracy != null
-                    ? '${_currentLocation!.accuracy!.toStringAsFixed(1)}m'
-                    : '--',
-              ),
-              const SizedBox(height: 8),
-              _buildInfoRow(
-                'Altitude',
-                _currentLocation!.altitude != null
-                    ? '${_currentLocation!.altitude!.toStringAsFixed(1)}m'
-                    : '--',
-              ),
-              const SizedBox(height: 8),
-              _buildInfoRow(
-                'Speed',
-                _currentLocation!.speed != null
-                    ? '${(_currentLocation!.speed! * 3.6).toStringAsFixed(1)} km/h'
-                    : '--',
-              ),
-            ],
           ],
         ),
       ),

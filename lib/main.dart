@@ -3,6 +3,7 @@ import 'package:meadowmiles/pages/admin_dashboard.dart';
 import 'package:meadowmiles/pages/profile/profile.dart';
 import 'package:meadowmiles/states/appstate.dart';
 import 'package:meadowmiles/states/authstate.dart';
+import 'package:meadowmiles/states/location_state.dart';
 import 'package:meadowmiles/pages/auth/login_page.dart';
 import 'package:meadowmiles/pages/auth/register_page.dart';
 import 'package:meadowmiles/pages/rentee_dashboard.dart';
@@ -27,6 +28,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AppState()),
         ChangeNotifierProvider(create: (_) => AuthState()),
+        ChangeNotifierProvider(create: (_) => LocationState()),
       ],
       child: const MyApp(),
     ),
@@ -51,8 +53,38 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfilePage(), // Temporary route
         '/admin_dashboard': (context) => const AdminDashboardPage(),
       },
-      home: const StartPage(),
+      home: const AppInitializer(),
     );
+  }
+}
+
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({super.key});
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    // Initialize location service
+    final locationState = Provider.of<LocationState>(context, listen: false);
+    try {
+      await locationState.initializeLocation();
+    } catch (e) {
+      print('Failed to initialize location service: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const StartPage();
   }
 }
 
