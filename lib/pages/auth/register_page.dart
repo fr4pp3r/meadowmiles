@@ -15,7 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   UserModel? _createdUserModel;
 
   int _currentStep = 0;
-  String? _selectedRole;
+  String _selectedRole = 'renter'; // Default to renter
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -29,8 +29,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _termsAccepted = false;
 
   void _nextStep() {
-    if (_currentStep == 0 && _selectedRole == null) return;
-    if (_currentStep == 1) {
+    if (_currentStep == 0) {
       if (_emailController.text.isEmpty ||
           _passwordController.text.isEmpty ||
           _confirmPasswordController.text.isEmpty ||
@@ -39,20 +38,20 @@ class _RegisterPageState extends State<RegisterPage> {
         return;
       }
     }
-    if (_currentStep == 2) {
+    if (_currentStep == 1) {
       if (_nameController.text.isEmpty || _mobileController.text.isEmpty) {
         setState(() {});
         return;
       }
     }
-    if (_currentStep == 3) {
+    if (_currentStep == 2) {
       if (!_termsAccepted) {
         setState(() {});
         return;
       }
     }
     setState(() {
-      if (_currentStep < 3) _currentStep++;
+      if (_currentStep < 2) _currentStep++;
     });
   }
 
@@ -66,7 +65,7 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() {
       _createdUserModel = null;
       _currentStep = 0;
-      _selectedRole = null;
+      _selectedRole = 'renter'; // Reset to default renter
       _selectedCountryCode = '+63';
       _passwordVisible = false;
       _confirmPasswordVisible = false;
@@ -177,7 +176,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 controlsBuilder: (context, details) {
                   return Row(
                     children: [
-                      if (_currentStep < 3)
+                      if (_currentStep < 2)
                         ElevatedButton(
                           onPressed: details.onStepContinue,
                           child: const Text('Next'),
@@ -187,7 +186,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           onPressed: details.onStepCancel,
                           child: const Text('Back'),
                         ),
-                      if (_currentStep == 3)
+                      if (_currentStep == 2)
                         ElevatedButton(
                           onPressed: () async {
                             _createUserModel();
@@ -209,38 +208,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 },
                 steps: [
                   Step(
-                    title: const Text('Select Role'),
+                    title: const Text('Account Credentials'),
                     isActive: _currentStep >= 0,
                     state: _currentStep > 0
-                        ? StepState.complete
-                        : StepState.indexed,
-                    content: DropdownButtonFormField<String>(
-                      value: _selectedRole,
-                      items: [
-                        DropdownMenuItem(
-                          value: 'renter',
-                          child: Text(
-                            'Renter (Customer)',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'rentee',
-                          child: Text(
-                            'Rentee (Owner of car)',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _selectedRole = value),
-                      decoration: const InputDecoration(labelText: 'Role'),
-                    ),
-                  ),
-                  Step(
-                    title: const Text('Account Credentials'),
-                    isActive: _currentStep >= 1,
-                    state: _currentStep > 1
                         ? StepState.complete
                         : StepState.indexed,
                     content: Column(
@@ -302,8 +272,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   Step(
                     title: const Text('Personal Info'),
-                    isActive: _currentStep >= 2,
-                    state: _currentStep > 2
+                    isActive: _currentStep >= 1,
+                    state: _currentStep > 1
                         ? StepState.complete
                         : StepState.indexed,
                     content: Column(
@@ -343,7 +313,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   Step(
                     title: const Text('Terms and Conditions'),
-                    isActive: _currentStep >= 3,
+                    isActive: _currentStep >= 2,
                     state: _termsAccepted
                         ? StepState.complete
                         : StepState.indexed,
@@ -373,7 +343,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ],
                         ),
-                        if (!_termsAccepted && _currentStep == 3)
+                        if (!_termsAccepted && _currentStep == 2)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
