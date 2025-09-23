@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:meadowmiles/models/support_ticket_model.dart';
+import 'package:meadowmiles/services/verification_service.dart';
+import 'package:meadowmiles/components/support_ticket_card.dart';
 
 class AdminSupportTab extends StatefulWidget {
   const AdminSupportTab({super.key});
@@ -7,94 +10,224 @@ class AdminSupportTab extends StatefulWidget {
   State<AdminSupportTab> createState() => _AdminSupportTabState();
 }
 
-class _AdminSupportTabState extends State<AdminSupportTab> {
+class _AdminSupportTabState extends State<AdminSupportTab>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.support_agent,
-            size: 120,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+    return Column(
+      children: [
+        // Tab bar
+        Container(
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 24),
-          Text(
-            'Support Tickets',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+          child: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(icon: Icon(Icons.verified_user), text: 'Verification'),
+              Tab(icon: Icon(Icons.support_agent), text: 'All Tickets'),
+            ],
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            indicator: BoxDecoration(
               color: Theme.of(context).colorScheme.primary,
+              borderRadius: BorderRadius.circular(12),
             ),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Support ticket management system\nwill be implemented here',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+        ),
+
+        // Tab views
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildVerificationTab(),
+              _buildAllTicketsTab(),
+            ],
           ),
-          const SizedBox(height: 32),
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.construction,
-                    size: 48,
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Coming Soon',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'This feature is currently under development and will include:',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildFeatureItem('📝', 'View all support tickets'),
-                      _buildFeatureItem('🔍', 'Filter by status and priority'),
-                      _buildFeatureItem('💬', 'Respond to user inquiries'),
-                      _buildFeatureItem('📊', 'Ticket analytics and reports'),
-                      _buildFeatureItem('🔔', 'Real-time notifications'),
-                      _buildFeatureItem('📋', 'Ticket assignment system'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 32), // Add some bottom padding
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildFeatureItem(String emoji, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        ],
-      ),
+  Widget _buildVerificationTab() {
+    return StreamBuilder<List<SupportTicket>>(
+      stream: VerificationService.getSupportTicketsByType(SupportTicketType.verification),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error,
+                  size: 64,
+                  color: Colors.red.shade300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading verification tickets',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please try again later',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final tickets = snapshot.data ?? [];
+
+        if (tickets.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.verified_user,
+                  size: 64,
+                  color: Colors.grey.shade300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No Verification Requests',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'User verification requests will appear here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: tickets.length,
+          itemBuilder: (context, index) {
+            return SupportTicketCard(
+              ticket: tickets[index],
+              onStatusChanged: () {
+                // Refresh the list when status changes
+                setState(() {});
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildAllTicketsTab() {
+    return StreamBuilder<List<SupportTicket>>(
+      stream: VerificationService.getAllSupportTickets(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error,
+                  size: 64,
+                  color: Colors.red.shade300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading support tickets',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please try again later',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final tickets = snapshot.data ?? [];
+
+        if (tickets.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.support_agent,
+                  size: 64,
+                  color: Colors.grey.shade300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No Support Tickets',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'User support tickets will appear here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: tickets.length,
+          itemBuilder: (context, index) {
+            return SupportTicketCard(
+              ticket: tickets[index],
+              onStatusChanged: () {
+                // Refresh the list when status changes
+                setState(() {});
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

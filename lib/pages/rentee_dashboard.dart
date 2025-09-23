@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/rentee/renteebook_tab.dart';
 import 'package:meadowmiles/pages/rentee/renteehistory_tab.dart';
+import 'package:meadowmiles/pages/rentee_gps_page.dart';
 import 'package:meadowmiles/pages/revenue.dart';
 import 'package:meadowmiles/pages/vehicle/vehicle_tab.dart';
 import 'package:meadowmiles/states/authstate.dart';
+import 'package:meadowmiles/states/appstate.dart';
+import 'package:meadowmiles/states/renter_gps_state.dart';
 import 'package:provider/provider.dart';
 
 class RenteeDashboardPage extends StatefulWidget {
@@ -21,8 +24,45 @@ class _RenteeDashboardPageState extends State<RenteeDashboardPage> {
     RenteeHistoryTab(),
     VehicleTab(),
     RevenuePage(),
-    Center(child: Text('Devices')),
+    RenteeGpsPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Set dashboard to rentee when entering
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+
+      appState.setActiveDashboard('rentee');
+
+      // Stop any renter GPS session that might be active
+      if (renterGpsState.isActive) {
+        renterGpsState.stopRenterGpsSession();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Clean up when leaving rentee dashboard
+    try {
+      final renterGpsState = Provider.of<RenterGpsState>(
+        context,
+        listen: false,
+      );
+      if (renterGpsState.isActive) {
+        renterGpsState.stopRenterGpsSession();
+      }
+    } catch (e) {
+      debugPrint('Error stopping GPS session: $e');
+    }
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {

@@ -8,6 +8,9 @@ class UserModel {
   final UserModelType userType;
   final DateTime? createdAt;
   final bool verifiedUser;
+  final bool online;
+  final bool markDelete;
+  final DateTime? markDeleteAt;
 
   UserModel({
     required this.uid,
@@ -17,6 +20,9 @@ class UserModel {
     required this.userType,
     this.createdAt,
     this.verifiedUser = false,
+    this.online = false,
+    this.markDelete = false,
+    this.markDeleteAt,
   });
 
   // Firestore serialization
@@ -37,6 +43,13 @@ class UserModel {
                 : DateTime.tryParse(map['createdAt'].toString()))
           : null,
       verifiedUser: map['verifiedUser'] ?? false,
+      online: map['online'] ?? false,
+      markDelete: map['markDelete'] ?? false,
+      markDeleteAt: map['markDeleteAt'] != null
+          ? (map['markDeleteAt'] is Timestamp
+                ? (map['markDeleteAt'] as Timestamp).toDate()
+                : DateTime.tryParse(map['markDeleteAt'].toString()))
+          : null,
     );
   }
 
@@ -49,6 +62,9 @@ class UserModel {
       'userType': userType.toString().split('.').last,
       'createdAt': createdAt,
       'verifiedUser': verifiedUser,
+      'online': online,
+      'markDelete': markDelete,
+      'markDeleteAt': markDeleteAt,
     };
   }
 

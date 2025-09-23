@@ -18,7 +18,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     'All',
     'Verified',
     'Unverified',
-    'Banned',
+    'Mark for Deletion',
   ];
 
   @override
@@ -151,9 +151,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                     return user.verifiedUser == true;
                   case 'Unverified':
                     return user.verifiedUser != true;
-                  case 'Banned':
-                    // Add banned logic when implemented
-                    return false;
+                  case 'Mark for Deletion':
+                    return user.markDelete == true;
                   default:
                     return true;
                 }
@@ -203,7 +202,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: user.verifiedUser == true
+          backgroundColor: user.markDelete
+              ? Colors.red
+              : user.verifiedUser
               ? Colors.green
               : Colors.orange,
           child: Text(
@@ -226,17 +227,29 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             Row(
               children: [
                 Icon(
-                  user.verifiedUser == true ? Icons.verified : Icons.pending,
+                  user.markDelete
+                      ? Icons.delete
+                      : user.verifiedUser
+                      ? Icons.verified
+                      : Icons.pending,
                   size: 16,
-                  color: user.verifiedUser == true
+                  color: user.markDelete
+                      ? Colors.red
+                      : user.verifiedUser == true
                       ? Colors.green
                       : Colors.orange,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  user.verifiedUser == true ? 'Verified' : 'Unverified',
+                  user.markDelete
+                      ? 'Marked for Deletion'
+                      : user.verifiedUser
+                      ? 'Verified'
+                      : 'Unverified',
                   style: TextStyle(
-                    color: user.verifiedUser == true
+                    color: user.markDelete
+                        ? Colors.red
+                        : user.verifiedUser == true
                         ? Colors.green
                         : Colors.orange,
                     fontWeight: FontWeight.w500,
@@ -282,12 +295,12 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               ),
             ),
             const PopupMenuItem(
-              value: 'delete',
+              value: 'Toggle Deletion',
               child: Row(
                 children: [
                   Icon(Icons.delete, color: Colors.red),
                   SizedBox(width: 8),
-                  Text('Delete User'),
+                  Text('Toggle Deletion'),
                 ],
               ),
             ),
@@ -308,7 +321,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       case 'view':
         _showUserDetails(user);
         break;
-      case 'delete':
+      case 'Toggle Deletion':
         _showDeleteConfirmation(user);
         break;
     }
@@ -400,9 +413,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete User'),
+        title: Text('${user.markDelete ? 'Unmark' : 'Mark'} User for Deletion'),
         content: Text(
-          'Are you sure you want to delete user "${user.name}"? This action cannot be undone.',
+          'Are you sure you want to ${user.markDelete ? 'unmark' : 'mark'} user "${user.name}" for deletion? This will ${user.markDelete ? 'allow' : 'prevent'} them ${user.markDelete ? 'to' : 'from'} logging in and their account can be permanently removed later.',
         ),
         actions: [
           TextButton(
@@ -414,8 +427,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               Navigator.of(context).pop();
               await _deleteUser(user);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: Text('${user.markDelete ? 'Unmark' : 'Mark'} for Deletion'),
           ),
         ],
       ),
@@ -423,28 +436,58 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   }
 
   Future<void> _deleteUser(UserModel user) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .delete();
+    if (!user.markDelete) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+              'markDelete': true,
+              'markDeleteAt': FieldValue.serverTimestamp(),
+            });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('User ${user.name} has been deleted'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('User ${user.name} has been marked for deletion'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error marking user for deletion: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting user: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+    } else {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'markDelete': false, 'markDeleteAt': null});
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('User ${user.name} has been unmarked for deletion'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error unmarking user for deletion: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
