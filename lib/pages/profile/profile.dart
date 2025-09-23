@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/states/appstate.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/models/user_model.dart';
+import 'package:meadowmiles/components/verification_dialog.dart';
+import 'package:meadowmiles/services/verification_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -41,41 +42,30 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _verifyUser() async {
     if (_userModel == null) return;
 
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_userModel!.uid)
-          .update({'verifiedUser': true});
+    // Check if user already has a pending verification ticket
+    final hasPending = await VerificationService.hasPendingVerificationTicket(
+      _userModel!.uid,
+    );
 
-      setState(() {
-        _userModel = UserModel(
-          uid: _userModel!.uid,
-          name: _userModel!.name,
-          email: _userModel!.email,
-          phoneNumber: _userModel!.phoneNumber,
-          userType: _userModel!.userType,
-          createdAt: _userModel!.createdAt,
-          verifiedUser: true,
-        );
-      });
-
+    if (hasPending) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('User verified successfully!'),
-            backgroundColor: Colors.green,
+            content: Text('You already have a pending verification request.'),
+            backgroundColor: Colors.orange,
           ),
         );
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to verify user: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      return;
+    }
+
+    // Show verification dialog
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => VerificationDialog(user: _userModel!),
+      );
     }
   }
 
@@ -418,7 +408,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   color: Colors.white,
                                 ),
                                 label: const Text(
-                                  'User Verification',
+                                  'Start Verification',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
