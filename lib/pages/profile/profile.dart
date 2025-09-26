@@ -5,6 +5,8 @@ import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/models/user_model.dart';
 import 'package:meadowmiles/components/verification_dialog.dart';
 import 'package:meadowmiles/services/verification_service.dart';
+import 'package:meadowmiles/services/owner_application_service.dart';
+import 'package:meadowmiles/models/owner_application_model.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -78,7 +80,36 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       if (_userModel!.userType == UserModelType.renter) {
-        // Perform actions specific to renters
+        // Check if user has a pending or approved owner application
+        final hasPending =
+            await OwnerApplicationService.hasPendingOwnerApplication(
+              _userModel!.uid,
+            );
+        final application =
+            await OwnerApplicationService.getUserOwnerApplication(
+              _userModel!.uid,
+            );
+
+        if (!mounted) return;
+
+        if (hasPending ||
+            (application != null &&
+                application.status == ApplicationStatus.underReview)) {
+          // Navigate to application status page
+          Navigator.pushNamed(context, '/application_status');
+        } else if (application != null &&
+            application.status == ApplicationStatus.approved) {
+          // User is already approved, just switch dashboard
+          appState.setActiveDashboard('rentee');
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/rentee_dashboard',
+            (route) => false,
+          );
+        } else {
+          // Navigate to owner application page
+          Navigator.pushNamed(context, '/apply_for_owner');
+        }
       } else if (_userModel!.userType == UserModelType.rentee &&
           appState.activeDashboard == 'renter') {
         // Perform actions specific to rentees
@@ -98,38 +129,6 @@ class _ProfilePageState extends State<ProfilePage> {
           (route) => false,
         );
       }
-
-      // final newUserType = _userModel!.userType == UserModelType.renter
-      //     ? UserModelType.rentee
-      //     : UserModelType.renter;
-
-      // await FirebaseFirestore.instance
-      //     .collection('users')
-      //     .doc(_userModel!.uid)
-      //     .update({'userType': newUserType.toString().split('.').last});
-
-      // setState(() {
-      //   _userModel = UserModel(
-      //     uid: _userModel!.uid,
-      //     name: _userModel!.name,
-      //     email: _userModel!.email,
-      //     phoneNumber: _userModel!.phoneNumber,
-      //     userType: newUserType,
-      //     createdAt: _userModel!.createdAt,
-      //     verifiedUser: _userModel!.verifiedUser,
-      //   );
-      // });
-
-      // if (mounted) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     SnackBar(
-      //       content: Text(
-      //         'Switched to ${newUserType == UserModelType.renter ? "Renter" : "Owner"} mode successfully!',
-      //       ),
-      //       backgroundColor: Colors.green,
-      //     ),
-      //   );
-      // }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

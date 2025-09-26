@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:meadowmiles/pages/admin_dashboard.dart';
 import 'package:meadowmiles/pages/profile/profile.dart';
+import 'package:meadowmiles/pages/owner/apply_for_owner_page.dart';
+import 'package:meadowmiles/pages/owner/application_status_page.dart';
 import 'package:meadowmiles/states/appstate.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/states/location_state.dart';
@@ -54,6 +56,8 @@ class MyApp extends StatelessWidget {
         '/renter_dashboard': (context) => const RenterDashboardPage(),
         '/profile': (context) => const ProfilePage(), // Temporary route
         '/admin_dashboard': (context) => const AdminDashboardPage(),
+        '/apply_for_owner': (context) => const ApplyForOwnerPage(),
+        '/application_status': (context) => const ApplicationStatusPage(),
       },
       home: const AppInitializer(),
     );
