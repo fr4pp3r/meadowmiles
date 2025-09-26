@@ -3,7 +3,7 @@ import 'package:meadowmiles/states/appstate.dart';
 import 'package:provider/provider.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/models/user_model.dart';
-import 'package:meadowmiles/components/verification_dialog.dart';
+import 'package:meadowmiles/pages/verification/verification_page.dart';
 import 'package:meadowmiles/services/verification_service.dart';
 import 'package:meadowmiles/services/owner_application_service.dart';
 import 'package:meadowmiles/models/owner_application_model.dart';
@@ -61,12 +61,12 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
 
-    // Show verification dialog
+    // Navigate to verification page
     if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => VerificationDialog(user: _userModel!),
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => VerificationPage(user: _userModel!),
+        ),
       );
     }
   }

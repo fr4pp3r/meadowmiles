@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:meadowmiles/models/owner_application_model.dart';
 import 'package:meadowmiles/services/owner_application_service.dart';
 import 'package:meadowmiles/states/authstate.dart';
+import 'package:meadowmiles/pages/legal/terms_and_conditions_page.dart';
+import 'package:meadowmiles/pages/legal/data_privacy_policy_page.dart';
 
 class ApplyForOwnerPage extends StatefulWidget {
   const ApplyForOwnerPage({super.key});
@@ -225,7 +227,7 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please agree to the terms and conditions'),
+          content: Text('Please read and agree to the Terms and Conditions and Data Privacy Policy'),
           backgroundColor: Colors.red,
         ),
       );
@@ -683,6 +685,203 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
 
               const SizedBox(height: 24),
 
+              // Legal Documents Section
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.blue.shade50,
+                      Colors.purple.shade50,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.blue.shade200,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.gavel,
+                          color: Colors.blue.shade700,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Legal Information',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Please review our terms and privacy policy before submitting your application:',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const TermsAndConditionsPage(),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(16.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white,
+                                      Theme.of(context).colorScheme.primary.withAlpha((0.02 * 255).toInt()),
+                                    ],
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.article_outlined,
+                                      color: Theme.of(context).colorScheme.primary,
+                                      size: 36,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Terms &\nConditions',
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).toInt()),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        'Tap to view',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const DataPrivacyPolicyPage(),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(16.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white,
+                                      Colors.blue.shade50.withAlpha((0.5 * 255).toInt()),
+                                    ],
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.privacy_tip_outlined,
+                                      color: Colors.blue.shade700,
+                                      size: 36,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Data Privacy\nPolicy',
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue.shade700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade100,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        'Tap to view',
+                                        style: TextStyle(
+                                          color: Colors.blue.shade700,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
               // Terms and Conditions
               CheckboxListTile(
                 value: _agreedToTerms,
@@ -691,15 +890,42 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                     _agreedToTerms = value ?? false;
                   });
                 },
-                title: const Text(
-                  'I agree to the terms and conditions and consent to document verification',
-                  style: TextStyle(fontSize: 14),
+                title: RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    children: const [
+                      TextSpan(
+                        text: 'I have read and agree to the ',
+                      ),
+                      TextSpan(
+                        text: 'Terms and Conditions',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' and ',
+                      ),
+                      TextSpan(
+                        text: 'Data Privacy Policy',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ', and consent to document verification and data processing.',
+                      ),
+                    ],
+                  ),
                 ),
                 subtitle: const Text(
-                  'By checking this, you agree that the documents provided are authentic and accurate.',
+                  'By checking this, you confirm that all provided documents are authentic and accurate, and you understand how your data will be used.',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
               ),
 
               const SizedBox(height: 24),
