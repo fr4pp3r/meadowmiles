@@ -184,9 +184,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           ElevatedButton(
                             onPressed: details.onStepContinue,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -203,25 +208,30 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         if (_currentStep == 2)
                           ElevatedButton(
-                            onPressed: _termsAccepted ? () async {
-                              _createUserModel();
-                              await authState.register(
-                                _createdUserModel!,
-                                _passwordController.text,
-                                context,
-                              );
-                              // To reset all fields, call _resetForm();
-                              _resetForm();
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            } : null,
+                            onPressed: _termsAccepted
+                                ? () async {
+                                    _createUserModel();
+                                    await authState.register(
+                                      _createdUserModel!,
+                                      _passwordController.text,
+                                      context,
+                                    );
+                                    // To reset all fields, call _resetForm();
+                                    _resetForm();
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  }
+                                : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _termsAccepted 
-                                  ? Colors.green.shade600 
+                              backgroundColor: _termsAccepted
+                                  ? Colors.green.shade600
                                   : Colors.grey.shade400,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 12,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -238,9 +248,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 const SizedBox(width: 8),
                                 const Text(
                                   'Create Account',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -365,16 +373,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         Text(
                           'Legal Documents',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Please review our terms and privacy policy before creating your account:',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey.shade600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.grey.shade600),
                         ),
                         const SizedBox(height: 16),
 
@@ -411,10 +417,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                   Expanded(
                                     child: Text(
                                       'Account Registration',
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue.shade700,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue.shade700,
+                                          ),
                                     ),
                                   ),
                                 ],
@@ -423,7 +432,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha((0.8 * 255).toInt()),
+                                  color: Colors.white.withAlpha(
+                                    (0.8 * 255).toInt(),
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Column(
@@ -431,9 +442,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                   children: [
                                     Text(
                                       'By creating an account, you will be able to:',
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 8),
                                     const Text(
@@ -441,7 +455,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                       '• Book and manage vehicle rentals\n'
                                       '• Apply for vehicle owner status (if eligible)\n'
                                       '• Communicate with other platform users',
-                                      style: TextStyle(fontSize: 14, height: 1.5),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.5,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -460,7 +477,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                         onTap: () {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
-                                              builder: (context) => const TermsAndConditionsPage(),
+                                              builder: (context) =>
+                                                  const TermsAndConditionsPage(),
                                             ),
                                           );
                                         },
@@ -468,13 +486,19 @@ class _RegisterPageState extends State<RegisterPage> {
                                         child: Container(
                                           padding: const EdgeInsets.all(16.0),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                             gradient: LinearGradient(
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                               colors: [
                                                 Colors.white,
-                                                Theme.of(context).colorScheme.primary.withAlpha((0.02 * 255).toInt()),
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary.withAlpha(
+                                                  (0.02 * 255).toInt(),
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -482,32 +506,49 @@ class _RegisterPageState extends State<RegisterPage> {
                                             children: [
                                               Icon(
                                                 Icons.article_outlined,
-                                                color: Theme.of(context).colorScheme.primary,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
                                                 size: 32,
                                               ),
                                               const SizedBox(height: 8),
                                               Text(
                                                 'Terms &\nConditions',
                                                 textAlign: TextAlign.center,
-                                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Theme.of(context).colorScheme.primary,
-                                                ),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary,
+                                                    ),
                                               ),
                                               const SizedBox(height: 6),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 12,
-                                                  vertical: 4,
-                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).toInt()),
-                                                  borderRadius: BorderRadius.circular(20),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary
+                                                      .withAlpha(
+                                                        (0.1 * 255).toInt(),
+                                                      ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
                                                 ),
                                                 child: Text(
                                                   'Tap to view',
                                                   style: TextStyle(
-                                                    color: Theme.of(context).colorScheme.primary,
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w600,
                                                   ),
@@ -530,7 +571,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                         onTap: () {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
-                                              builder: (context) => const DataPrivacyPolicyPage(),
+                                              builder: (context) =>
+                                                  const DataPrivacyPolicyPage(),
                                             ),
                                           );
                                         },
@@ -538,13 +580,17 @@ class _RegisterPageState extends State<RegisterPage> {
                                         child: Container(
                                           padding: const EdgeInsets.all(16.0),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                             gradient: LinearGradient(
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                               colors: [
                                                 Colors.white,
-                                                Colors.blue.shade50.withAlpha((0.5 * 255).toInt()),
+                                                Colors.blue.shade50.withAlpha(
+                                                  (0.5 * 255).toInt(),
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -559,20 +605,27 @@ class _RegisterPageState extends State<RegisterPage> {
                                               Text(
                                                 'Data Privacy\nPolicy',
                                                 textAlign: TextAlign.center,
-                                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blue.shade700,
-                                                ),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          Colors.blue.shade700,
+                                                    ),
                                               ),
                                               const SizedBox(height: 6),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 12,
-                                                  vertical: 4,
-                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4,
+                                                    ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.blue.shade100,
-                                                  borderRadius: BorderRadius.circular(20),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
                                                 ),
                                                 child: Text(
                                                   'Tap to view',
@@ -619,7 +672,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                     _termsAccepted = val ?? false;
                                   });
                                 },
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -628,30 +682,34 @@ class _RegisterPageState extends State<RegisterPage> {
                                   children: [
                                     RichText(
                                       text: TextSpan(
-                                        style: Theme.of(context).textTheme.bodyMedium,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
                                         children: const [
                                           TextSpan(
-                                            text: 'I have read and agree to the ',
+                                            text:
+                                                'I have read and agree to the ',
                                           ),
                                           TextSpan(
                                             text: 'Terms and Conditions',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              decoration: TextDecoration.underline,
+                                              decoration:
+                                                  TextDecoration.underline,
                                             ),
                                           ),
-                                          TextSpan(
-                                            text: ' and ',
-                                          ),
+                                          TextSpan(text: ' and '),
                                           TextSpan(
                                             text: 'Data Privacy Policy',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              decoration: TextDecoration.underline,
+                                              decoration:
+                                                  TextDecoration.underline,
                                             ),
                                           ),
                                           TextSpan(
-                                            text: ', and consent to data collection and processing for account creation.',
+                                            text:
+                                                ', and consent to data collection and processing for account creation.',
                                           ),
                                         ],
                                       ),
@@ -659,7 +717,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                     const SizedBox(height: 8),
                                     const Text(
                                       'By checking this box, you confirm that you are at least 18 years old and agree to create an account on MeadowMiles platform.',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),

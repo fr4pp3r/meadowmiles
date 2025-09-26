@@ -227,7 +227,9 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please read and agree to the Terms and Conditions and Data Privacy Policy'),
+          content: Text(
+            'Please read and agree to the Terms and Conditions and Data Privacy Policy',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -693,16 +695,10 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Colors.blue.shade50,
-                      Colors.purple.shade50,
-                    ],
+                    colors: [Colors.blue.shade50, Colors.purple.shade50],
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.blue.shade200,
-                    width: 1,
-                  ),
+                  border: Border.all(color: Colors.blue.shade200, width: 1),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -717,10 +713,11 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                         const SizedBox(width: 12),
                         Text(
                           'Legal Information',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue.shade700,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade700,
+                              ),
                         ),
                       ],
                     ),
@@ -745,7 +742,8 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => const TermsAndConditionsPage(),
+                                    builder: (context) =>
+                                        const TermsAndConditionsPage(),
                                   ),
                                 );
                               },
@@ -759,7 +757,8 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                                     end: Alignment.bottomRight,
                                     colors: [
                                       Colors.white,
-                                      Theme.of(context).colorScheme.primary.withAlpha((0.02 * 255).toInt()),
+                                      Theme.of(context).colorScheme.primary
+                                          .withAlpha((0.02 * 255).toInt()),
                                     ],
                                   ),
                                 ),
@@ -767,17 +766,24 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                                   children: [
                                     Icon(
                                       Icons.article_outlined,
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                       size: 36,
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
                                       'Terms &\nConditions',
                                       textAlign: TextAlign.center,
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).colorScheme.primary,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                          ),
                                     ),
                                     const SizedBox(height: 8),
                                     Container(
@@ -786,13 +792,18 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).toInt()),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withAlpha((0.1 * 255).toInt()),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
                                         'Tap to view',
                                         style: TextStyle(
-                                          color: Theme.of(context).colorScheme.primary,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -815,7 +826,8 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => const DataPrivacyPolicyPage(),
+                                    builder: (context) =>
+                                        const DataPrivacyPolicyPage(),
                                   ),
                                 );
                               },
@@ -829,7 +841,9 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                                     end: Alignment.bottomRight,
                                     colors: [
                                       Colors.white,
-                                      Colors.blue.shade50.withAlpha((0.5 * 255).toInt()),
+                                      Colors.blue.shade50.withAlpha(
+                                        (0.5 * 255).toInt(),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -844,10 +858,13 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                                     Text(
                                       'Data Privacy\nPolicy',
                                       textAlign: TextAlign.center,
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue.shade700,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue.shade700,
+                                          ),
                                     ),
                                     const SizedBox(height: 8),
                                     Container(
@@ -894,9 +911,7 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                   text: TextSpan(
                     style: Theme.of(context).textTheme.bodyMedium,
                     children: const [
-                      TextSpan(
-                        text: 'I have read and agree to the ',
-                      ),
+                      TextSpan(text: 'I have read and agree to the '),
                       TextSpan(
                         text: 'Terms and Conditions',
                         style: TextStyle(
@@ -904,9 +919,7 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                           decoration: TextDecoration.underline,
                         ),
                       ),
-                      TextSpan(
-                        text: ' and ',
-                      ),
+                      TextSpan(text: ' and '),
                       TextSpan(
                         text: 'Data Privacy Policy',
                         style: TextStyle(
@@ -915,7 +928,8 @@ class _ApplyForOwnerPageState extends State<ApplyForOwnerPage> {
                         ),
                       ),
                       TextSpan(
-                        text: ', and consent to document verification and data processing.',
+                        text:
+                            ', and consent to document verification and data processing.',
                       ),
                     ],
                   ),
