@@ -24,8 +24,12 @@ class TermsAndConditionsPage extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).toInt()),
-                    Theme.of(context).colorScheme.secondary.withAlpha((0.05 * 255).toInt()),
+                    Theme.of(
+                      context,
+                    ).colorScheme.primary.withAlpha((0.1 * 255).toInt()),
+                    Theme.of(
+                      context,
+                    ).colorScheme.secondary.withAlpha((0.05 * 255).toInt()),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
@@ -43,10 +47,11 @@ class TermsAndConditionsPage extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text(
                         'Terms and Conditions',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                       ),
                     ],
                   ),
@@ -60,7 +65,7 @@ class TermsAndConditionsPage extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
 
             // Content
@@ -233,9 +238,9 @@ Business hours: Monday-Friday, 9:00 AM - 6:00 PM''',
             ),
             child: Text(
               content,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                height: 1.6,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.6),
             ),
           ),
         ],

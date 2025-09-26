@@ -43,10 +43,11 @@ class DataPrivacyPolicyPage extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text(
                         'Data Privacy Policy',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
                       ),
                     ],
                   ),
@@ -60,7 +61,7 @@ class DataPrivacyPolicyPage extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
 
             // Content
@@ -288,7 +289,13 @@ We aim to respond to all privacy inquiries within 30 days.''',
     );
   }
 
-  Widget _buildSection(BuildContext context, String title, String content, IconData icon, Color color) {
+  Widget _buildSection(
+    BuildContext context,
+    String title,
+    String content,
+    IconData icon,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24.0),
       child: Column(
@@ -296,11 +303,7 @@ We aim to respond to all privacy inquiries within 30 days.''',
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
+              Icon(icon, color: color, size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -324,9 +327,9 @@ We aim to respond to all privacy inquiries within 30 days.''',
             ),
             child: Text(
               content,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                height: 1.6,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.6),
             ),
           ),
         ],

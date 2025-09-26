@@ -63,10 +63,11 @@ class _VerificationPageState extends State<VerificationPage> {
                     children: [
                       Text(
                         'Step ${_currentStep + 1} of 4',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                       ),
                       Text(
                         _getStepTitle(),
@@ -83,9 +84,7 @@ class _VerificationPageState extends State<VerificationPage> {
 
             // Content
             Expanded(
-              child: SingleChildScrollView(
-                child: _buildCurrentStepContent(),
-              ),
+              child: SingleChildScrollView(child: _buildCurrentStepContent()),
             ),
 
             // Navigation buttons
@@ -107,7 +106,10 @@ class _VerificationPageState extends State<VerificationPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -153,16 +155,16 @@ class _VerificationPageState extends State<VerificationPage> {
       children: [
         Text(
           'Legal Information',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           'Please review our terms and privacy policy before starting verification:',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.grey.shade600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 24),
 
@@ -174,16 +176,10 @@ class _VerificationPageState extends State<VerificationPage> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Colors.blue.shade50,
-                Colors.purple.shade50,
-              ],
+              colors: [Colors.blue.shade50, Colors.purple.shade50],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.blue.shade200,
-              width: 1,
-            ),
+            border: Border.all(color: Colors.blue.shade200, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +244,8 @@ class _VerificationPageState extends State<VerificationPage> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const TermsAndConditionsPage(),
+                              builder: (context) =>
+                                  const TermsAndConditionsPage(),
                             ),
                           );
                         },
@@ -262,7 +259,9 @@ class _VerificationPageState extends State<VerificationPage> {
                               end: Alignment.bottomRight,
                               colors: [
                                 Colors.white,
-                                Theme.of(context).colorScheme.primary.withAlpha((0.02 * 255).toInt()),
+                                Theme.of(context).colorScheme.primary.withAlpha(
+                                  (0.02 * 255).toInt(),
+                                ),
                               ],
                             ),
                           ),
@@ -277,10 +276,13 @@ class _VerificationPageState extends State<VerificationPage> {
                               Text(
                                 'Terms &\nConditions',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
                               ),
                               const SizedBox(height: 6),
                               Container(
@@ -289,13 +291,16 @@ class _VerificationPageState extends State<VerificationPage> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).toInt()),
+                                  color: Theme.of(context).colorScheme.primary
+                                      .withAlpha((0.1 * 255).toInt()),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   'Tap to view',
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -318,7 +323,8 @@ class _VerificationPageState extends State<VerificationPage> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const DataPrivacyPolicyPage(),
+                              builder: (context) =>
+                                  const DataPrivacyPolicyPage(),
                             ),
                           );
                         },
@@ -332,7 +338,9 @@ class _VerificationPageState extends State<VerificationPage> {
                               end: Alignment.bottomRight,
                               colors: [
                                 Colors.white,
-                                Colors.blue.shade50.withAlpha((0.5 * 255).toInt()),
+                                Colors.blue.shade50.withAlpha(
+                                  (0.5 * 255).toInt(),
+                                ),
                               ],
                             ),
                           ),
@@ -347,10 +355,11 @@ class _VerificationPageState extends State<VerificationPage> {
                               Text(
                                 'Data Privacy\nPolicy',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue.shade700,
-                                ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade700,
+                                    ),
                               ),
                               const SizedBox(height: 6),
                               Container(
@@ -405,9 +414,7 @@ class _VerificationPageState extends State<VerificationPage> {
               text: TextSpan(
                 style: Theme.of(context).textTheme.bodyMedium,
                 children: const [
-                  TextSpan(
-                    text: 'I have read and agree to the ',
-                  ),
+                  TextSpan(text: 'I have read and agree to the '),
                   TextSpan(
                     text: 'Terms and Conditions',
                     style: TextStyle(
@@ -415,9 +422,7 @@ class _VerificationPageState extends State<VerificationPage> {
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  TextSpan(
-                    text: ' and ',
-                  ),
+                  TextSpan(text: ' and '),
                   TextSpan(
                     text: 'Data Privacy Policy',
                     style: TextStyle(
@@ -426,7 +431,8 @@ class _VerificationPageState extends State<VerificationPage> {
                     ),
                   ),
                   TextSpan(
-                    text: ', and consent to identity verification and data processing.',
+                    text:
+                        ', and consent to identity verification and data processing.',
                   ),
                 ],
               ),
@@ -452,16 +458,16 @@ class _VerificationPageState extends State<VerificationPage> {
       children: [
         Text(
           'Upload Your ID',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           'Please upload a clear photo of your government-issued ID (license, passport, etc.)',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.grey.shade600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 24),
         Container(
@@ -479,10 +485,7 @@ class _VerificationPageState extends State<VerificationPage> {
           child: _idImage != null
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.file(
-                    File(_idImage!.path),
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.file(File(_idImage!.path), fit: BoxFit.cover),
                 )
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -555,16 +558,16 @@ class _VerificationPageState extends State<VerificationPage> {
       children: [
         Text(
           'Take a Selfie',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           'Please take a clear photo of your face for identity verification',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.grey.shade600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 24),
         Container(
@@ -590,11 +593,7 @@ class _VerificationPageState extends State<VerificationPage> {
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.face,
-                      size: 64,
-                      color: Colors.grey.shade400,
-                    ),
+                    Icon(Icons.face, size: 64, color: Colors.grey.shade400),
                     const SizedBox(height: 16),
                     Text(
                       'No selfie taken yet',
@@ -658,9 +657,9 @@ class _VerificationPageState extends State<VerificationPage> {
       children: [
         Text(
           'Review & Submit',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 24),
         Container(
@@ -673,11 +672,7 @@ class _VerificationPageState extends State<VerificationPage> {
           ),
           child: Column(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 64,
-              ),
+              Icon(Icons.check_circle, color: Colors.green, size: 64),
               const SizedBox(height: 16),
               Text(
                 'Ready to Submit',
@@ -699,9 +694,9 @@ class _VerificationPageState extends State<VerificationPage> {
         if (_idImage != null && _selfieImage != null) ...[
           Text(
             'Uploaded Documents',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Row(
