@@ -295,7 +295,7 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
       if (deviceQuery.docs.isNotEmpty) {
         final deviceDoc = deviceQuery.docs.first;
         Map<String, dynamic> deviceData = deviceDoc.data();
-        String? deviceUid = deviceData['uid'] as String?;
+        String? deviceUid = deviceData['userUid'] as String?;
         String? phoneNumber;
 
         if (deviceUid != null && deviceUid.isNotEmpty) {
@@ -434,6 +434,65 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
       if (_deviceId != null && _deviceName != null) {
         locationState.setConnectedDevice(_deviceId!, _deviceName!);
         renterGpsState.setConnectedDevice(_deviceId!, _deviceName!);
+      }
+
+      // Automatically send phone number after successful reconnection
+      if (_deviceId != null) {
+        try {
+          // Get device data from tracking_devices collection by device ID
+          final deviceQuery = await FirebaseFirestore.instance
+              .collection('tracking_devices')
+              .where('id', isEqualTo: _deviceId)
+              .limit(1)
+              .get();
+
+          if (deviceQuery.docs.isNotEmpty) {
+            final deviceDoc = deviceQuery.docs.first;
+            Map<String, dynamic> deviceData = deviceDoc.data();
+            String? deviceUid = deviceData['userUid'] as String?;
+            String? registeredPhoneNumber;
+
+            if (deviceUid != null && deviceUid.isNotEmpty) {
+              // Get the user's phone number from the users collection
+              try {
+                final userDoc = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(deviceUid)
+                    .get();
+
+                if (userDoc.exists) {
+                  final userData = userDoc.data() as Map<String, dynamic>;
+                  registeredPhoneNumber = userData['phoneNumber'] as String?;
+                }
+              } catch (e) {
+                print(
+                  'Error fetching user data for phone number during reconnection: $e',
+                );
+              }
+            }
+
+            // Send phone number to ESP32 if available
+            if (registeredPhoneNumber != null &&
+                registeredPhoneNumber.isNotEmpty) {
+              print(
+                'Automatically sending phone number after reconnection: $registeredPhoneNumber',
+              );
+              await _sendPhoneNumberToESP32(
+                registeredPhoneNumber,
+                _connectedBleDevice,
+              );
+            } else {
+              print(
+                'No phone number found for user registered to device $_deviceId after reconnection',
+              );
+            }
+          }
+        } catch (e) {
+          print(
+            'Error automatically sending phone number after reconnection: $e',
+          );
+          // Don't fail the reconnection just because phone number sending failed
+        }
       }
 
       if (mounted) {
