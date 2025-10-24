@@ -11,77 +11,77 @@ ThemeData meadowMilesTheme() {
     fontFamily: 'Copperplate Gothic',
     textTheme: const TextTheme(
       bodyLarge: TextStyle(
-        fontSize: 20,
+        fontSize: 18,
         fontFamily: 'Roboto',
         fontWeight: FontWeight.normal,
       ),
       bodyMedium: TextStyle(
-        fontSize: 18,
+        fontSize: 16,
         fontFamily: 'Roboto',
         fontWeight: FontWeight.normal,
       ),
       bodySmall: TextStyle(
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'Roboto',
         fontWeight: FontWeight.normal,
       ),
       headlineLarge: TextStyle(
-        fontSize: 30,
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         fontFamily: 'Copperplate Gothic',
       ),
       headlineMedium: TextStyle(
-        fontSize: 26,
+        fontSize: 24,
         fontWeight: FontWeight.bold,
         fontFamily: 'Copperplate Gothic',
       ),
       headlineSmall: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        fontFamily: 'Copperplate Gothic',
-      ),
-      titleLarge: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        fontFamily: 'Copperplate Gothic',
-      ),
-      titleMedium: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
         fontFamily: 'Copperplate Gothic',
       ),
-      titleSmall: TextStyle(
+      titleLarge: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Copperplate Gothic',
+      ),
+      titleMedium: TextStyle(
         fontSize: 18,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Copperplate Gothic',
+      ),
+      titleSmall: TextStyle(
+        fontSize: 16,
         fontWeight: FontWeight.bold,
         fontFamily: 'Copperplate Gothic',
       ),
       labelLarge: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        fontFamily: 'Roboto',
-      ),
-      labelMedium: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
         fontFamily: 'Roboto',
       ),
-      labelSmall: TextStyle(
+      labelMedium: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.bold,
         fontFamily: 'Roboto',
       ),
+      labelSmall: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Roboto',
+      ),
       displayLarge: TextStyle(
-        fontSize: 34,
+        fontSize: 32,
         fontWeight: FontWeight.bold,
         fontFamily: 'Copperplate Gothic',
       ),
       displayMedium: TextStyle(
-        fontSize: 30,
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         fontFamily: 'Copperplate Gothic',
       ),
       displaySmall: TextStyle(
-        fontSize: 26,
+        fontSize: 24,
         fontWeight: FontWeight.bold,
         fontFamily: 'Copperplate Gothic',
       ),
