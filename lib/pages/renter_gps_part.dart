@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:meadowmiles/states/location_state.dart';
 import 'package:meadowmiles/states/renter_gps_state.dart';
@@ -144,6 +145,215 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
     locationState.clearConnectedDevice();
   }
 
+  /// Send phone number to ESP32 device via BLE
+  Future<void> _sendPhoneNumberToESP32(
+    String phoneNumber,
+    BluetoothDevice? bleDevice,
+  ) async {
+    if (bleDevice == null) {
+      print('Cannot send phone number: BLE device is null');
+      return;
+    }
+
+    try {
+      print('Sending phone number $phoneNumber to ESP32...');
+
+      // Discover services to find the characteristic
+      List<BluetoothService> services = await bleDevice.discoverServices();
+      BluetoothCharacteristic? targetCharacteristic;
+
+      // ESP32 UUIDs from the Arduino code
+      const String serviceUuid = "12345678-1234-1234-1234-123456789abc";
+      const String characteristicUuid = "87654321-4321-4321-4321-cba987654321";
+
+      for (BluetoothService service in services) {
+        if (service.uuid.toString().toLowerCase() ==
+            serviceUuid.toLowerCase()) {
+          for (BluetoothCharacteristic characteristic
+              in service.characteristics) {
+            if (characteristic.uuid.toString().toLowerCase() ==
+                characteristicUuid.toLowerCase()) {
+              targetCharacteristic = characteristic;
+              break;
+            }
+          }
+          break;
+        }
+      }
+
+      if (targetCharacteristic != null) {
+        // Send the SET_PHONE command with the phone number
+        String command = 'SET_PHONE:$phoneNumber';
+        List<int> commandBytes = utf8.encode(command);
+
+        await targetCharacteristic.write(commandBytes);
+        print('Phone number command sent: $command');
+
+        // Wait a bit for ESP32 to process
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Read response from ESP32
+        try {
+          List<int> response = await targetCharacteristic.read();
+          String responseString = utf8.decode(response);
+          print('ESP32 response: $responseString');
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Phone number updated on ESP32: $responseString'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        } catch (e) {
+          print('Could not read response from ESP32: $e');
+          // Not critical - the command was sent successfully
+        }
+      } else {
+        print(
+          'Could not find required BLE characteristic for phone number update',
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Could not update phone number on device - BLE characteristic not found',
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error sending phone number to ESP32: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update phone number on device: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updatePhoneNumberOnDevice() async {
+    if (_connectedBleDevice == null || _deviceId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No device connected'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Get the current user's phone number from Firebase
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('User not authenticated'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Updating phone number...'),
+            ],
+          ),
+        ),
+      );
+
+      // Get device data from tracking_devices collection by device ID
+      final deviceQuery = await FirebaseFirestore.instance
+          .collection('tracking_devices')
+          .where('id', isEqualTo: _deviceId)
+          .limit(1)
+          .get();
+
+      Navigator.of(context).pop(); // Close loading dialog
+
+      if (deviceQuery.docs.isNotEmpty) {
+        final deviceDoc = deviceQuery.docs.first;
+        Map<String, dynamic> deviceData = deviceDoc.data();
+        String? deviceUid = deviceData['userUid'] as String?;
+        String? phoneNumber;
+
+        if (deviceUid != null && deviceUid.isNotEmpty) {
+          // Get the user's phone number from the users collection
+          try {
+            final userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(deviceUid)
+                .get();
+
+            if (userDoc.exists) {
+              final userData = userDoc.data() as Map<String, dynamic>;
+              phoneNumber = userData['phoneNumber'] as String?;
+            }
+          } catch (e) {
+            print('Error fetching user data for phone number: $e');
+          }
+        }
+
+        if (phoneNumber != null && phoneNumber.isNotEmpty) {
+          await _sendPhoneNumberToESP32(phoneNumber, _connectedBleDevice);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No phone number found for the user registered to this device',
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Device not found in tracking devices database'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+
+      print('Error updating phone number on device: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update phone number: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   void _handleUnexpectedDisconnection() {
     print('Handling unexpected BLE disconnection...');
 
@@ -224,6 +434,65 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
       if (_deviceId != null && _deviceName != null) {
         locationState.setConnectedDevice(_deviceId!, _deviceName!);
         renterGpsState.setConnectedDevice(_deviceId!, _deviceName!);
+      }
+
+      // Automatically send phone number after successful reconnection
+      if (_deviceId != null) {
+        try {
+          // Get device data from tracking_devices collection by device ID
+          final deviceQuery = await FirebaseFirestore.instance
+              .collection('tracking_devices')
+              .where('id', isEqualTo: _deviceId)
+              .limit(1)
+              .get();
+
+          if (deviceQuery.docs.isNotEmpty) {
+            final deviceDoc = deviceQuery.docs.first;
+            Map<String, dynamic> deviceData = deviceDoc.data();
+            String? deviceUid = deviceData['userUid'] as String?;
+            String? registeredPhoneNumber;
+
+            if (deviceUid != null && deviceUid.isNotEmpty) {
+              // Get the user's phone number from the users collection
+              try {
+                final userDoc = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(deviceUid)
+                    .get();
+
+                if (userDoc.exists) {
+                  final userData = userDoc.data() as Map<String, dynamic>;
+                  registeredPhoneNumber = userData['phoneNumber'] as String?;
+                }
+              } catch (e) {
+                print(
+                  'Error fetching user data for phone number during reconnection: $e',
+                );
+              }
+            }
+
+            // Send phone number to ESP32 if available
+            if (registeredPhoneNumber != null &&
+                registeredPhoneNumber.isNotEmpty) {
+              print(
+                'Automatically sending phone number after reconnection: $registeredPhoneNumber',
+              );
+              await _sendPhoneNumberToESP32(
+                registeredPhoneNumber,
+                _connectedBleDevice,
+              );
+            } else {
+              print(
+                'No phone number found for user registered to device $_deviceId after reconnection',
+              );
+            }
+          }
+        } catch (e) {
+          print(
+            'Error automatically sending phone number after reconnection: $e',
+          );
+          // Don't fail the reconnection just because phone number sending failed
+        }
       }
 
       if (mounted) {
@@ -359,6 +628,31 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
           .get();
 
       if (deviceQuery.docs.isNotEmpty) {
+        // Get the device document
+        final deviceDoc = deviceQuery.docs.first;
+        final deviceData = deviceDoc.data();
+
+        // Extract the UID registered to this device
+        String? deviceUid = deviceData['userUid'] as String?;
+        String? registeredPhoneNumber;
+
+        if (deviceUid != null && deviceUid.isNotEmpty) {
+          // Get the user's phone number from the users collection
+          try {
+            final userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(deviceUid)
+                .get();
+
+            if (userDoc.exists) {
+              final userData = userDoc.data() as Map<String, dynamic>;
+              registeredPhoneNumber = userData['phoneNumber'] as String?;
+            }
+          } catch (e) {
+            print('Error fetching user data for phone number: $e');
+          }
+        }
+
         if (mounted) {
           // Reset reconnection state for new connection
           _reconnectAttempts = 0;
@@ -400,6 +694,25 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
 
           locationState.setConnectedDevice(deviceId, deviceName);
           renterGpsState.setConnectedDevice(deviceId, deviceName);
+
+          // Send phone number to ESP32 if available
+          if (registeredPhoneNumber != null &&
+              registeredPhoneNumber.isNotEmpty) {
+            await _sendPhoneNumberToESP32(registeredPhoneNumber, bleDevice);
+          } else {
+            print(
+              'No phone number found for user registered to device $deviceId',
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'No phone number found for the user registered to this device. Please update your profile.',
+                ),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -714,6 +1027,19 @@ class _RenterGpsPageState extends State<RenterGpsPage> {
                   ],
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            // Phone number update button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _updatePhoneNumberOnDevice,
+                icon: const Icon(Icons.phone, size: 20),
+                label: const Text('Update Phone Number on Device'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
           ],
         ),

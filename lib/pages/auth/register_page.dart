@@ -3,6 +3,8 @@ import 'package:meadowmiles/models/user_model.dart';
 import 'package:meadowmiles/states/authstate.dart';
 import 'package:provider/provider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:meadowmiles/pages/legal/terms_and_conditions_page.dart';
+import 'package:meadowmiles/pages/legal/data_privacy_policy_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -174,36 +176,85 @@ class _RegisterPageState extends State<RegisterPage> {
                 onStepContinue: _nextStep,
                 onStepCancel: _prevStep,
                 controlsBuilder: (context, details) {
-                  return Row(
-                    children: [
-                      if (_currentStep < 2)
-                        ElevatedButton(
-                          onPressed: details.onStepContinue,
-                          child: const Text('Next'),
-                        ),
-                      if (_currentStep > 0)
-                        TextButton(
-                          onPressed: details.onStepCancel,
-                          child: const Text('Back'),
-                        ),
-                      if (_currentStep == 2)
-                        ElevatedButton(
-                          onPressed: () async {
-                            _createUserModel();
-                            await authState.register(
-                              _createdUserModel!,
-                              _passwordController.text,
-                              context,
-                            );
-                            // To reset all fields, call _resetForm();
-                            _resetForm();
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: const Text('Register'),
-                        ),
-                    ],
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Row(
+                      children: [
+                        if (_currentStep < 2)
+                          ElevatedButton(
+                            onPressed: details.onStepContinue,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Next Step'),
+                          ),
+                        if (_currentStep > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12.0),
+                            child: TextButton(
+                              onPressed: details.onStepCancel,
+                              child: const Text('Back'),
+                            ),
+                          ),
+                        if (_currentStep == 2)
+                          ElevatedButton(
+                            onPressed: _termsAccepted
+                                ? () async {
+                                    _createUserModel();
+                                    await authState.register(
+                                      _createdUserModel!,
+                                      _passwordController.text,
+                                      context,
+                                    );
+                                    // To reset all fields, call _resetForm();
+                                    _resetForm();
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _termsAccepted
+                                  ? Colors.green.shade600
+                                  : Colors.grey.shade400,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: _termsAccepted ? 4 : 0,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.app_registration,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Create Account',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   );
                 },
                 steps: [
@@ -312,7 +363,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   Step(
-                    title: const Text('Terms and Conditions'),
+                    title: const Text('Legal Information'),
                     isActive: _currentStep >= 2,
                     state: _termsAccepted
                         ? StepState.complete
@@ -321,34 +372,393 @@ class _RegisterPageState extends State<RegisterPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'By registering, you agree to MeadowMiles\' Terms and Conditions. Please read them carefully before proceeding.\n\n1. You agree to provide accurate information.\n2. You are responsible for your account security.\n3. MeadowMiles is not liable for any damages or losses.\n4. For full terms, visit our website.',
-                          style: Theme.of(context).textTheme.bodySmall,
+                          'Legal Documents',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _termsAccepted,
-                              onChanged: (val) {
-                                setState(() {
-                                  _termsAccepted = val ?? false;
-                                });
-                              },
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please review our terms and privacy policy before creating your account:',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Legal Documents Section
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.blue.shade50,
+                                Colors.purple.shade50,
+                              ],
                             ),
-                            Expanded(
-                              child: Text(
-                                'I agree to the Terms and Conditions',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.blue.shade200,
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.app_registration,
+                                    color: Colors.blue.shade700,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Account Registration',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue.shade700,
+                                          ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha(
+                                    (0.8 * 255).toInt(),
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'By creating an account, you will be able to:',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      '• Access vehicle rental platform features\n'
+                                      '• Book and manage vehicle rentals\n'
+                                      '• Apply for vehicle owner status (if eligible)\n'
+                                      '• Communicate with other platform users',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Card(
+                                      elevation: 3,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const TermsAndConditionsPage(),
+                                            ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16.0),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: [
+                                                Colors.white,
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary.withAlpha(
+                                                  (0.02 * 255).toInt(),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              Icon(
+                                                Icons.article_outlined,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                size: 32,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Terms &\nConditions',
+                                                textAlign: TextAlign.center,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary
+                                                      .withAlpha(
+                                                        (0.1 * 255).toInt(),
+                                                      ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Text(
+                                                  'Tap to view',
+                                                  style: TextStyle(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Card(
+                                      elevation: 3,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const DataPrivacyPolicyPage(),
+                                            ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16.0),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: [
+                                                Colors.white,
+                                                Colors.blue.shade50.withAlpha(
+                                                  (0.5 * 255).toInt(),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              Icon(
+                                                Icons.privacy_tip_outlined,
+                                                color: Colors.blue.shade700,
+                                                size: 32,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Data Privacy\nPolicy',
+                                                textAlign: TextAlign.center,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          Colors.blue.shade700,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue.shade100,
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Text(
+                                                  'Tap to view',
+                                                  style: TextStyle(
+                                                    color: Colors.blue.shade700,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
+
+                        const SizedBox(height: 20),
+
+                        // Consent checkbox
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: _termsAccepted
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.grey.shade300,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Checkbox(
+                                value: _termsAccepted,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _termsAccepted = val ?? false;
+                                  });
+                                },
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                        children: const [
+                                          TextSpan(
+                                            text:
+                                                'I have read and agree to the ',
+                                          ),
+                                          TextSpan(
+                                            text: 'Terms and Conditions',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                          TextSpan(text: ' and '),
+                                          TextSpan(
+                                            text: 'Data Privacy Policy',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text:
+                                                ', and consent to data collection and processing for account creation.',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'By checking this box, you confirm that you are at least 18 years old and agree to create an account on MeadowMiles platform.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
                         if (!_termsAccepted && _currentStep == 2)
                           Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'You must agree to the Terms and Conditions to register.',
-                              style: TextStyle(color: Colors.red),
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.red.shade700,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'You must read and agree to the Terms and Conditions and Data Privacy Policy to create an account.',
+                                      style: TextStyle(
+                                        color: Colors.red.shade700,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                       ],
