@@ -137,9 +137,15 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     final bookings = await FirebaseFirestore.instance
         .collection('bookings')
         .where('vehicleId', isEqualTo: widget.vehicle.id)
-        .where('status', isNotEqualTo: 'cancelled')
         .get();
-    return bookings.docs.isNotEmpty;
+
+    // Filter out cancelled and returned bookings in code
+    final activeBookings = bookings.docs.where((doc) {
+      final status = doc.data()['status'] as String?;
+      return status != null && status != 'cancelled' && status != 'returned';
+    }).toList();
+
+    return activeBookings.isNotEmpty;
   }
 
   Future<void> _removeVehicle() async {
