@@ -46,14 +46,8 @@ class _LoginPageState extends State<LoginPage> {
   void _login(BuildContext context, AuthState authState) async {
     final email = _usernameController.text.trim();
     final password = _passwordController.text;
-    if (email == "admin" && password == "admin") {
-      // Navigate to admin dashboard
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/admin_dashboard',
-        (route) => false,
-      );
-    } else if (email.isEmpty || password.isEmpty) {
+
+    if (email.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -69,19 +63,28 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
       return;
-    } else {
-      await authState.signIn(email, password, context);
-      _clearFields();
-      if (authState.currentUser != null) {
-        if (context.mounted) {
-          // Navigate to the appropriate dashboard based on user type
-          if (context.mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/renter_dashboard',
-              (route) => false,
-            );
-          }
+    }
+
+    await authState.signIn(email, password, context);
+    _clearFields();
+
+    if (authState.currentUser != null && authState.currentUserModel != null) {
+      if (context.mounted) {
+        // Navigate to the appropriate dashboard based on user type
+        final userType = authState.currentUserModel!.userType;
+
+        if (userType.toString() == 'UserModelType.admin') {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/admin_dashboard',
+            (route) => false,
+          );
+        } else {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/renter_dashboard',
+            (route) => false,
+          );
         }
       }
     }
@@ -198,7 +201,10 @@ class _LoginPageState extends State<LoginPage> {
                               alignment: Alignment.centerRight,
                               child: GestureDetector(
                                 onTap: () {
-                                  // Handle "Forgot your username?" tap here
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/forgot_password',
+                                  );
                                 },
                                 child: Text(
                                   'Forgot your password?',

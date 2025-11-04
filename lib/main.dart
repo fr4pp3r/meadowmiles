@@ -8,6 +8,8 @@ import 'package:meadowmiles/states/authstate.dart';
 import 'package:meadowmiles/states/location_state.dart';
 import 'package:meadowmiles/pages/auth/login_page.dart';
 import 'package:meadowmiles/pages/auth/register_page.dart';
+import 'package:meadowmiles/pages/auth/forgot_password_page.dart';
+import 'package:meadowmiles/pages/auth/verify_otp_page.dart';
 import 'package:meadowmiles/pages/rentee_dashboard.dart';
 import 'package:meadowmiles/pages/renter_dashboard.dart';
 import 'package:meadowmiles/pages/start_page.dart';
@@ -52,6 +54,8 @@ class MyApp extends StatelessWidget {
         '/start': (context) => const StartPage(),
         '/login': (context) => LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/forgot_password': (context) => const ForgotPasswordPage(),
+        '/verify_otp': (context) => const VerifyOTPPage(),
         '/rentee_dashboard': (context) => const RenteeDashboardPage(),
         '/renter_dashboard': (context) => const RenterDashboardPage(),
         '/profile': (context) => const ProfilePage(), // Temporary route

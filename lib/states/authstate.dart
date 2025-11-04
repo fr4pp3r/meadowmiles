@@ -235,4 +235,22 @@ class AuthState extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Reset password for a user with verified OTP
+  // Sends Firebase's built-in password reset email
+  Future<bool> resetPassword(String email, String newPassword) async {
+    try {
+      // Send Firebase password reset email
+      await _auth.sendPasswordResetEmail(email: email);
+      return true;
+    } catch (e) {
+      debugPrint('Error sending password reset email: $e');
+      return false;
+    }
+  }
+
+  // Alternative method name for clarity
+  Future<bool> sendPasswordResetEmail(String email) async {
+    return await resetPassword(email, '');
+  }
 }
